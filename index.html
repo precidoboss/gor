@@ -181,14 +181,12 @@
         let allUsers = {};
         let posts = []; // Cache for posts
         let currentPage = 'home'; // Default page
-        // FIX: Initialize these variables to prevent TypeError
         let searchTerm = '';
-        let profileViewAddress = null; // Will be set to currentWalletAddress when profile is viewed
-        let profileActiveTab = 'posts'; // Default tab for profile page
+        let profileViewAddress = null;
+        let profileActiveTab = 'posts';
 
-        // Reown AppKit Instances (now managed manually for direct Phantom/Solana Web3.js)
-        let solanaConnection; // Solana Connection object (from @solana/web3.js)
-        let walletProvider = null; // This will hold window.solana (Phantom) or a custom provider
+        let solanaConnection;
+        let walletProvider = null;
 
 
         // --- Utility Functions ---
@@ -206,14 +204,12 @@
         function showLoading(isLoading) {
             console.log(isLoading ? "Loading..." : "Loading complete.");
             document.querySelectorAll('button').forEach(btn => {
-                // Only disable buttons that are not the connect wallet button
                 if (btn.id !== 'connect-wallet-button') {
                     btn.disabled = isLoading;
                 }
             });
         }
 
-        // --- Wallet Connection (Reverted to direct Phantom/Solana Web3.js) ---
         async function connectWallet() {
             console.log("Attempting to connect wallet...");
             if (window.solana && window.solana.isPhantom) {
@@ -222,23 +218,22 @@
                     const resp = await window.solana.connect();
                     currentWalletAddress = resp.publicKey.toBase58();
                     solanaConnection = new solanaWeb3.Connection(GORBAGANA_RPC_URL, 'confirmed');
-                    walletProvider = window.solana; // Assign Phantom as the provider
+                    walletProvider = window.solana;
 
                     showMessage(`Wallet connected: ${currentWalletAddress.substring(0, 6)}...${currentWalletAddress.slice(-4)}`);
                     
-                    // Re-fetch user-specific data after successful connection
                     await fetchCurrentUserProfile();
                     await fetchWalletData();
                     await fetchNotifications();
                     
-                    renderApp(); // Re-render app content after connection and data fetch
+                    renderApp();
 
                 } catch (err) {
                     console.error('Failed to connect wallet:', err);
                     showMessage(`Failed to connect wallet: ${err.message || err.toString()}`, "error");
                     currentWalletAddress = null;
                     walletProvider = null;
-                    renderApp(); // Re-render to show disconnected state
+                    renderApp();
                 } finally {
                     showLoading(false);
                 }
@@ -247,10 +242,8 @@
             }
         }
 
-        // --- Supabase Data Management ---
-
         async function fetchCurrentUserProfile() {
-            console.log("Fetching current user profile..."); // Added log
+            console.log("Fetching current user profile...");
             if (!supabase || !currentWalletAddress) {
                 console.log("Supabase or wallet address not ready for profile fetch.");
                 return;
@@ -262,12 +255,12 @@
                 .eq('wallet_address', currentWalletAddress)
                 .single();
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+            if (error && error.code !== 'PGRST116') {
                 console.error("Error fetching current user profile:", error);
                 showMessage("Failed to load your profile.", "error");
             } else if (data) {
                 currentUserProfile = data;
-                console.log("Current user profile fetched:", currentUserProfile); // Added log
+                console.log("Current user profile fetched:", currentUserProfile);
             } else {
                 const defaultUsername = `User_${currentWalletAddress.substring(0, 8)}`;
                 const { error: insertError } = await supabase.from('profiles').insert({
@@ -284,14 +277,13 @@
                     showMessage("Failed to create default profile.", "error");
                 } else {
                     currentUserProfile = { wallet_address: currentWalletAddress, username: defaultUsername, bio: 'Hello, I am new here!', followers: [], following: [], tickets_earned: 0, blocked_users: [] };
-                    console.log("Default profile created:", currentUserProfile); // Added log
+                    console.log("Default profile created:", currentUserProfile);
                 }
             }
-            // renderProfilePage() is called by renderApp, no need to call here directly
         }
 
         async function fetchAllUsers() {
-            console.log("Fetching all users..."); // Added log
+            console.log("Fetching all users...");
             if (!supabase) return;
             const { data, error } = await supabase
                 .from('profiles')
@@ -305,13 +297,12 @@
                     fetchedUsersMap[user.wallet_address] = user;
                 });
                 allUsers = fetchedUsersMap;
-                console.log("All users fetched:", allUsers); // Added log
+                console.log("All users fetched:", allUsers);
             }
-            // renderSearchPage() is called by renderApp, no need to call here directly
         }
 
         async function fetchWalletData() {
-            console.log("Fetching wallet data..."); // Added log
+            console.log("Fetching wallet data...");
             if (!supabase || !currentWalletAddress) return;
             const { data, error } = await supabase
                 .from('wallets')
@@ -324,7 +315,7 @@
                 showMessage("Failed to load wallet data.", "error");
             } else if (data) {
                 walletData = data;
-                console.log("Wallet data fetched:", walletData); // Added log
+                console.log("Wallet data fetched:", walletData);
             } else {
                 const { error: insertError } = await supabase.from('wallets').insert({
                     wallet_address: currentWalletAddress,
@@ -336,14 +327,13 @@
                     showMessage("Failed to create default wallet.", "error");
                 } else {
                     walletData = { wallet_address: currentWalletAddress, gor_balance: 0, tickets_holding: [] };
-                    console.log("Default wallet created:", walletData); // Added log
+                    console.log("Default wallet created:", walletData);
                 }
             }
-            // renderWalletPage() is called by renderApp, no need to call here directly
         }
 
         async function fetchNotifications() {
-            console.log("Fetching notifications..."); // Added log
+            console.log("Fetching notifications...");
             if (!supabase || !currentWalletAddress) return;
             const { data, error } = await supabase
                 .from('notifications')
@@ -357,13 +347,12 @@
             } else {
                 notifications = data;
                 updateNotificationBadge();
-                console.log("Notifications fetched:", notifications); // Added log
+                console.log("Notifications fetched:", notifications);
             }
-            // renderNotificationsPage() is called by renderApp, no need to call here directly
         }
 
         async function fetchPosts() {
-            console.log("Fetching posts..."); // Added log
+            console.log("Fetching posts...");
             if (!supabase) return;
             const { data, error } = await supabase
                 .from('posts')
@@ -375,14 +364,12 @@
                 showMessage("Failed to load posts.", "error");
             } else {
                 posts = data;
-                console.log("Posts fetched:", posts); // Added log
+                console.log("Posts fetched:", posts);
             }
-            // renderHomePage() is called by renderApp, no need to call here directly
         }
 
-        // --- Supabase Realtime Subscriptions ---
         function setupSupabaseRealtime() {
-            console.log("Setting up Supabase real-time subscriptions..."); // Added log
+            console.log("Setting up Supabase real-time subscriptions...");
             if (!supabase) return;
 
             supabase
@@ -409,8 +396,6 @@
                     .subscribe();
             }
         }
-
-        // --- Actions ---
 
         async function uploadImage(file) {
             if (!file) return null;
@@ -450,7 +435,6 @@
                 showMessage("Post content or image cannot be empty.", "error");
                 return;
             }
-            // FIX: Check for walletProvider.publicKey existence
             if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !walletProvider || !walletProvider.publicKey) {
                 showMessage("Please connect your wallet first.", "error");
                 return;
@@ -484,8 +468,8 @@
                     showMessage("Failed to create post.", "error");
                 } else {
                     document.getElementById('new-post-content').value = '';
-                    postImageInput.value = ''; // Clear file input
-                    document.getElementById('selected-image-name').classList.add('hidden'); // Hide selected image name
+                    postImageInput.value = '';
+                    document.getElementById('selected-image-name').classList.add('hidden');
                     showMessage("Post created successfully!");
                 }
             } catch (error) {
@@ -648,9 +632,9 @@
 
         async function handleProfileClick(profileAddress) {
             if (!supabase) return;
-            profileViewAddress = profileAddress; // Set global variable
-            currentPage = 'profile'; // Set global variable
-            renderApp(); // Re-render the app to show the profile page
+            profileViewAddress = profileAddress;
+            currentPage = 'profile';
+            renderApp();
         }
 
         async function handleFollowToggle(targetAddress, isFollowing) {
@@ -785,13 +769,11 @@
                 transaction.recentBlockhash = blockhash;
                 transaction.feePayer = walletProvider.publicKey;
 
-                // Use walletProvider.sendTransaction
                 const signature = await walletProvider.sendTransaction(transaction, solanaConnection);
                 await solanaConnection.confirmTransaction(signature, 'processed');
 
                 showMessage("Ticket purchase transaction confirmed on-chain!", "success");
 
-                // --- Update Supabase AFTER successful on-chain transaction ---
                 let updatedTicketsHolding = [...walletData.tickets_holding];
                 const existingTicketIndex = updatedTicketsHolding.findIndex(ticket => ticket.wallet_address === targetAddress);
 
@@ -869,6 +851,7 @@
                 showMessage("Initiating ticket sale transaction...", "info");
 
                 // --- Simulate on-chain transaction for selling ticket ---
+                // In a real app, you'd transfer the token back or use a program.
                 // For this HTML version, we'll proceed with Supabase update after a simulated "transaction".
                 // You could add a dummy transaction here if desired, e.g.:
                 // const transaction = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({ fromPubkey: walletProvider.publicKey, toPubkey: walletProvider.publicKey, lamports: 1 }));
@@ -953,8 +936,7 @@
                 } catch (e) {
                     console.warn(`Receiver token account for ${targetAddress} not found, attempting to create.`, e);
                     // This is simplified; in a real app, you'd handle associated token account creation on-chain
-                    // if it doesn't exist for the recipient. For this demo, we assume it generally exists or a different flow.
-                    // For the purpose of this demo, if the ATA doesn't exist, we'll just log and proceed with the simulated DB update.
+                    // if it doesn't exist for the recipient. For this demo, if the ATA doesn't exist, we'll just log and proceed with the simulated DB update.
                     // A proper solution would involve `createAssociatedTokenAccountInstruction` and adding it to the transaction.
                     showMessage("Recipient's GOR token account not found. Cannot complete on-chain tip.", "error");
                     showLoading(false);
@@ -981,7 +963,6 @@
 
                 showMessage("Tip transaction confirmed on-chain!", "success");
 
-                // --- Update Supabase AFTER successful on-chain transaction ---
                 const { error: senderUpdateError } = await supabase
                     .from('wallets')
                     .update({ gor_balance: walletData.gor_balance - amount })
@@ -1067,7 +1048,6 @@
 
                 if (profileUpdateError) throw profileUpdateError;
 
-                // Update username in existing posts by this user (denormalized data)
                 const { error: postsUpdateError } = await supabase
                     .from('posts')
                     .update({ username: username })
@@ -1075,7 +1055,6 @@
 
                 if (postsUpdateError) console.error("Error updating username in posts:", postsUpdateError);
 
-                // Update username in existing comments by this user (denormalized data)
                 const { error: commentsUpdateError } = await supabase
                     .from('comments')
                     .update({ username: username })
@@ -1094,7 +1073,7 @@
         }
 
         function handleSearch() {
-            searchTerm = document.getElementById('search-input').value.trim(); // Update searchTerm
+            searchTerm = document.getElementById('search-input').value.trim();
             renderSearchPage();
         }
 
@@ -1111,7 +1090,6 @@
                 .slice(0, 5);
         }
 
-        // --- Render Functions for Pages ---
         function hideAllPages() {
             document.getElementById('home-page').classList.add('hidden');
             document.getElementById('profile-page').classList.add('hidden');
@@ -1134,11 +1112,10 @@
         }
 
         function renderApp() {
-            console.log("Rendering app for page:", currentPage); // Added log
+            console.log("Rendering app for page:", currentPage);
             hideAllPages();
             updateActiveNavButton();
 
-            // Render specific page content
             switch (currentPage) {
                 case 'home':
                     renderHomePage();
@@ -1168,7 +1145,7 @@
         }
 
         function renderHomePage() {
-            console.log("Rendering home page, currentWalletAddress:", currentWalletAddress); // Added log
+            console.log("Rendering home page, currentWalletAddress:", currentWalletAddress);
             const homePage = document.getElementById('home-page');
             const connectedStateHtml = `
                 <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
@@ -1200,9 +1177,8 @@
             `;
 
             homePage.innerHTML = currentWalletAddress ? connectedStateHtml : disconnectedStateHtml;
-            console.log("Home page HTML set. Current wallet address:", currentWalletAddress); // Added log
+            console.log("Home page HTML set. Current wallet address:", currentWalletAddress);
 
-            // Attach event listeners after rendering HTML
             if (currentWalletAddress) {
                 document.getElementById('post-button').onclick = handlePost;
                 const newPostImageInput = document.getElementById('new-post-image');
@@ -1216,16 +1192,22 @@
                     }
                 };
             } else {
-                document.getElementById('connect-wallet-button').onclick = connectWallet;
+                const connectWalletButton = document.getElementById('connect-wallet-button');
+                if (connectWalletButton) { // Check if the button exists before attaching event listener
+                    connectWalletButton.onclick = connectWallet;
+                }
             }
 
-            renderPostsFeed(); // Render posts regardless of connection
+            renderPostsFeed();
         }
 
         async function renderPostsFeed() {
             const postsFeed = document.getElementById('posts-feed');
-            console.log("Rendering posts feed, current posts data:", posts); // Added log
+            console.log("Rendering posts feed, current posts data:", posts);
+            
+            // Show loading initially, then update with actual content
             postsFeed.innerHTML = '<p class="text-gray-500 text-center py-8">Loading posts...</p>';
+
 
             if (posts.length === 0) {
                 postsFeed.innerHTML = '<p class="text-gray-500 text-center py-8">No posts yet. Be the first to share something!</p>';
@@ -1235,11 +1217,10 @@
             let postsHtml = '';
             for (const post of posts) {
                 const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
-                const isLiked = post.likes && post.likes.includes(currentWalletAddress);
+                const isLiked = currentWalletAddress && post.likes && post.likes.includes(currentWalletAddress);
                 const likeButtonClass = isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400';
                 const isAuthor = post.author_address === currentWalletAddress;
 
-                // Fetch comments for this post
                 const { data: commentsData, error: commentsError } = await supabase
                     .from('comments')
                     .select('*')
@@ -1281,20 +1262,20 @@
                         ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
                         <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-3 mt-4">
                             <button class="flex items-center space-x-2 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                 <span>${post.likes_count || 0}</span>
                             </button>
                             <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
                                 <span>${post.comments_count || 0}</span>
                             </button>
                             <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
                                 <span>${post.reposts_count || 0}</span>
                             </button>
                             ${!isAuthor && currentWalletAddress ? `
                             <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                                 <span class="font-medium">Tip</span>
                             </button>
                             ` : ''}
@@ -1314,12 +1295,11 @@
             }
             postsFeed.innerHTML = postsHtml;
 
-            // Attach event listeners for dynamically created elements
             postsFeed.querySelectorAll('.like-button').forEach(button => {
                 button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
             });
             postsFeed.querySelectorAll('.comment-toggle-button').forEach(button => {
-                button.onclick = async () => { // Make async to fetch comments
+                button.onclick = async () => {
                     const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
                     commentsSection.classList.toggle('hidden');
                     if (!commentsSection.classList.contains('hidden')) {
@@ -1330,7 +1310,7 @@
                             .order('created_at', { ascending: true });
 
                         const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
-                        commentsListDiv.innerHTML = ''; // Clear loading message
+                        commentsListDiv.innerHTML = '';
 
                         if (commentsError) {
                             console.error("Error fetching comments:", commentsError);
@@ -1367,11 +1347,11 @@
             postsFeed.querySelectorAll('.post-comment-button').forEach(button => {
                 button.onclick = async () => {
                     const postId = button.dataset.postId;
-                    const commentInput = button.previousElementSibling; // The input field
+                    const commentInput = button.previousElementSibling;
                     const commentContent = commentInput.value.trim();
                     if (commentContent) {
                         await handleComment(postId, commentContent);
-                        commentInput.value = ''; // Clear input
+                        commentInput.value = '';
                     } else {
                         showMessage("Comment cannot be empty.", "error");
                     }
@@ -1453,7 +1433,6 @@
                 </div>
             `;
 
-            // Attach event listeners for profile actions
             if (isCurrentUserProfile) {
                 document.getElementById('edit-profile-button').onclick = () => {
                     document.getElementById('edit-username').value = currentUserProfile.username || '';
@@ -1483,7 +1462,7 @@
 
         function renderProfilePostsFeed(content, isCurrentUserProfile) {
             const profilePostsFeed = document.getElementById('profile-posts-feed');
-            profilePostsFeed.innerHTML = ''; // Clear existing content
+            profilePostsFeed.innerHTML = '';
 
             if (content.length === 0) {
                 profilePostsFeed.innerHTML = `<p class="text-center text-gray-500 py-4">${profileActiveTab === 'posts' ? 'No posts yet.' : 'No reposts yet.'}</p>`;
@@ -1493,15 +1472,11 @@
             let postsHtml = '';
             for (const post of content) {
                 const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
-                const isLiked = post.likes && post.likes.includes(currentWalletAddress);
+                const isLiked = currentWalletAddress && post.likes && post.likes.includes(currentWalletAddress);
                 const likeButtonClass = isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400';
-                const postIsAuthor = post.author_address === currentWalletAddress; // Check if the post's author is the current user
+                const postIsAuthor = post.author_address === currentWalletAddress;
 
-                // Fetch comments for this post
-                // NOTE: In vanilla JS, fetching comments for EACH post on profile render can be heavy.
-                // For a true scale, you'd load comments on demand (e.g., when "show comments" is clicked).
-                // For this demo, we'll simulate.
-                let commentsHtml = '<p class="text-gray-500 text-sm">Comments load on demand...</p>'; // Simplified for performance
+                let commentsHtml = '<p class="text-gray-500 text-sm">Comments load on demand...</p>';
 
                 postsHtml += `
                     <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 transform transition-transform duration-200 hover:-translate-y-1">
@@ -1519,20 +1494,20 @@
                         ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
                         <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-3 mt-4">
                             <button class="flex items-center space-x-2 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                 <span class="font-medium">${post.likes_count || 0}</span>
                             </button>
                             <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
                                 <span class="font-medium">${post.comments_count || 0}</span>
                             </button>
                             <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
                                 <span class="font-medium">${post.reposts_count || 0}</span>
                             </button>
                             ${!postIsAuthor && currentWalletAddress ? `
                             <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
-                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                                 <span class="font-medium">Tip</span>
                             </button>
                             ` : ''}
@@ -1551,12 +1526,11 @@
             }
             profilePostsFeed.innerHTML = postsHtml;
 
-            // Re-attach event listeners for dynamically created elements
             profilePostsFeed.querySelectorAll('.like-button').forEach(button => {
                 button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
             });
             profilePostsFeed.querySelectorAll('.comment-toggle-button').forEach(button => {
-                button.onclick = async () => { // Make async to fetch comments
+                button.onclick = async () => {
                     const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
                     commentsSection.classList.toggle('hidden');
                     if (!commentsSection.classList.contains('hidden')) {
@@ -1567,7 +1541,7 @@
                             .order('created_at', { ascending: true });
 
                         const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
-                        commentsListDiv.innerHTML = ''; // Clear loading message
+                        commentsListDiv.innerHTML = '';
 
                         if (commentsError) {
                             console.error("Error fetching comments:", commentsError);
@@ -1708,7 +1682,10 @@
                     button.onclick = () => handleSellTicket(button.dataset.walletAddress);
                 });
             } else {
-                document.getElementById('connect-wallet-button').onclick = connectWallet;
+                const connectWalletButton = document.getElementById('connect-wallet-button');
+                if (connectWalletButton) {
+                    connectWalletButton.onclick = connectWallet;
+                }
             }
         }
 
@@ -1733,7 +1710,7 @@
             } else {
                 notificationsHtml += '<p class="text-center text-gray-500 py-8">No new notifications.</p>';
             }
-            notificationsHtml += `</div>`; // Close the main content div
+            notificationsHtml += `</div>`;
             notificationsPage.innerHTML = notificationsHtml;
 
             notificationsPage.querySelectorAll('[data-notification-id]').forEach(element => {
@@ -1747,7 +1724,7 @@
             if (unreadCount > 0) {
                 badge.textContent = unreadCount;
                 badge.classList.remove('hidden');
-                badge.classList.add('animate-bounce-fade-in'); // Apply animation
+                badge.classList.add('animate-bounce-fade-in');
             } else {
                 badge.classList.add('hidden');
                 badge.classList.remove('animate-bounce-fade-in');
@@ -1797,11 +1774,10 @@
                 );
                 searchHtml += `<h3 class="text-2xl font-bold text-gray-800 mb-5 mt-8">Search Results</h3>`;
                 if (filteredPosts.length > 0) {
-                    // Re-use Post rendering logic (simplified for HTML)
-                    let postsContentHtml = '<div class="space-y-6">'; // Container for posts
+                    let postsContentHtml = '<div class="space-y-6">';
                     for(const post of filteredPosts) {
                         const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
-                        const isLiked = post.likes && post.likes.includes(currentWalletAddress);
+                        const isLiked = currentWalletAddress && post.likes && post.likes.includes(currentWalletAddress);
                         const likeButtonClass = isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400';
                         const isAuthor = post.author_address === currentWalletAddress;
 
@@ -1820,20 +1796,20 @@
                                 ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
                                 <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-3 mt-4">
                                     <button class="flex items-center space-x-2 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                         <span class="font-medium">${post.likes_count || 0}</span>
                                     </button>
                                     <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
                                         <span class="font-medium">${post.comments_count || 0}</span>
                                     </button>
                                     <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
                                         <span class="font-medium">${post.reposts_count || 0}</span>
                                     </button>
                                     ${!isAuthor && currentWalletAddress ? `
                                     <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
-                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                                         <span class="font-medium">Tip</span>
                                     </button>
                                     ` : ''}
@@ -1850,14 +1826,13 @@
                             </div>
                         `;
                     }
-                    searchHtml += postsContentHtml + '</div>'; // Close the posts container
+                    searchHtml += postsContentHtml + '</div>';
                 } else {
                     searchHtml += `<p class="text-center text-gray-500 py-8">No results found for "${searchTerm}".</p>`;
                 }
             }
             searchPage.innerHTML = searchHtml;
 
-            // Attach event listeners for search page elements
             document.getElementById('search-button').onclick = handleSearch;
             document.getElementById('search-input').onkeyup = (e) => {
                 if (e.key === 'Enter') handleSearch();
@@ -1866,7 +1841,6 @@
                 element.onclick = () => handleProfileClick(element.dataset.walletAddress);
             });
 
-            // Attach post interaction listeners for search results
             searchPage.querySelectorAll('.like-button').forEach(button => {
                 button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
             });
@@ -1882,7 +1856,7 @@
                             .order('created_at', { ascending: true });
 
                         const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
-                        commentsListDiv.innerHTML = ''; // Clear loading message
+                        commentsListDiv.innerHTML = '';
 
                         if (commentsError) {
                             console.error("Error fetching comments:", commentsError);
@@ -1976,7 +1950,6 @@
             `;
         }
 
-        // --- Event Listeners for Navigation and Modals ---
         document.getElementById('home-nav').onclick = () => { currentPage = 'home'; renderApp(); };
         document.getElementById('profile-nav').onclick = () => { currentPage = 'profile'; profileViewAddress = currentWalletAddress; renderApp(); };
         document.getElementById('wallet-nav').onclick = () => { currentPage = 'wallet'; renderApp(); };
@@ -1990,6 +1963,7 @@
 
         document.getElementById('tip-cancel').onclick = () => {
             document.getElementById('tip-modal').classList.add('hidden');
+            document.getElementById('tip-amount').value = '1'; // Reset tip amount
         };
 
         document.getElementById('edit-profile-cancel').onclick = () => {
@@ -1998,34 +1972,39 @@
         document.getElementById('edit-profile-save').onclick = handleSaveProfile;
 
 
-        // Initial render when script loads
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOM Content Loaded. Starting initial app setup.");
             
-            // Initialize Solana Connection globally once
             solanaConnection = new solanaWeb3.Connection(GORBAGANA_RPC_URL, 'confirmed');
             console.log("Solana Connection initialized.");
 
-            // Check if Supabase is ready before initial render
-            const checkSupabaseReady = setInterval(async () => { // Made async to await data fetches
-                if (supabase && supabase.from && supabase.storage) {
-                    clearInterval(checkSupabaseReady);
-                    console.log("Supabase ready. Performing initial data fetches and render.");
-                    // Fetch initial data before rendering the app
-                    await fetchAllUsers(); // Populate allUsers first
-                    await fetchPosts();    // Populate posts
-                    // Only fetch user-specific data if wallet is connected (this will be null initially, but will be called again after connectWallet)
-                    // We don't call fetchCurrentUserProfile, fetchWalletData, fetchNotifications here
-                    // because they depend on currentWalletAddress which is null initially.
-                    // These will be called after connectWallet() is successful.
-                    renderApp(); // Initial render of the app
-                    setupSupabaseRealtime(); // Setup real-time listeners
+            try {
+                // Ensure all users and posts are fetched before initial render of any page
+                await fetchAllUsers();
+                await fetchPosts();
+                console.log("Initial data (users and posts) fetched successfully.");
+            } catch (error) {
+                console.error("Error during initial data fetch:", error);
+                showMessage("Failed to load initial data. Please check your network connection and Supabase configuration.", "error");
+            } finally {
+                // Only attempt to fetch user-specific data if a wallet is already connected (e.g., from a previous session)
+                // If not, renderApp will show the disconnected state, and these will be called after connectWallet()
+                if (window.solana && window.solana.isPhantom && window.solana.publicKey) {
+                    currentWalletAddress = window.solana.publicKey.toBase58();
+                    walletProvider = window.solana;
+                    console.log("Phantom detected and already connected. Fetching user-specific data.");
+                    await fetchCurrentUserProfile();
+                    await fetchWalletData();
+                    await fetchNotifications();
                 } else {
-                    console.log("Waiting for Supabase to be ready...");
+                    console.log("No wallet connected initially.");
                 }
-            }, 100); // Check every 100ms
+                
+                renderApp(); // Render the app for the first time with whatever data is available
+                setupSupabaseRealtime(); // Setup real-time listeners after initial render
+            }
         });
 
     </script>
 </body>
-</html>
+</html>"></iframe>
