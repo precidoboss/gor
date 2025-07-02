@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web3 Social App</title>
-    <!-- Tailwind CSS CDN -->
+    <title>GORTRASHSOCIAL App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Solana Wallet Adapter UI styles - No longer strictly needed for Reown, but kept for general styling -->
     <link rel="stylesheet" href="https://unpkg.com/@solana/wallet-adapter-react-ui@latest/styles.css" />
     <style>
         body {
@@ -66,42 +64,52 @@
     </style>
 </head>
 <body class="text-gray-900">
+    <script>
+        if (typeof crypto === 'undefined' || !crypto.randomUUID) {
+            console.warn("crypto.randomUUID not found. Attempting polyfill for older browsers/environments.");
+            // Basic polyfill for demonstration, not cryptographically secure for production
+            window.crypto = window.crypto || {};
+            window.crypto.randomUUID = window.crypto.randomUUID || function() {
+                // Fallback UUID v4 generation (simplified, not truly random)
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            };
+        }
+    </script>
     <div id="app-root" class="min-h-screen bg-gray-100 font-sans text-gray-900 flex flex-col md:flex-row">
-        <!-- Sidebar Navigation (will be dynamically populated by JS) -->
         <nav id="sidebar-nav" class="bg-white shadow-md md:w-64 p-4 md:p-6 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-start border-b md:border-r border-gray-200 fixed bottom-0 md:static w-full z-40">
-            <div class="hidden md:block mb-8 text-2xl font-bold text-green-700">Web3 Social</div>
-            <ul id="nav-links" class="flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-4 w-full justify-around md:justify-start">
+            <div class="hidden md:block mb-8 text-2xl font-bold text-green-700">GORTRASHSOCIAL</div> <ul id="nav-links" class="flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-4 w-full justify-around md:justify-start">
                 <li><button id="home-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                    <span class="hidden md:inline">Home</span>
+                    <span>Home</span>
                 </button></li>
                 <li><button id="profile-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    <span class="hidden md:inline">Profile</span>
+                    <span>Profile</span>
                 </button></li>
                 <li><button id="wallet-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-                    <span class="hidden md:inline">Wallet</span>
+                    <span>Wallet</span>
                 </button></li>
                 <li><button id="notifications-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V9c0-3.07-1.63-5.64-4.5-6.32V2.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.18C7.63 3.36 6 5.93 6 9v7l-2 2v1h16v-1l-2-2z"/></svg>
-                    <span class="hidden md:inline">Notifications</span>
+                    <span>Notifications</span>
                     <span id="notification-badge" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full hidden">0</span>
                 </button></li>
                 <li><button id="search-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <span class="hidden md:inline">Search</span>
+                    <span>Search</span>
                 </button></li>
                 <li><button id="settings-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.09-.75-1.71-1.02L14.3 2.5c-.05-.24-.27-.42-.5-.42h-4c-.23 0-.45.18-.5.42L8.03 5.09c-.62.27-1.19.62-1.71 1.02l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.64-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.09.75 1.71 1.02l.34 2.59c.05.24.27.42.5.42h4c.23 0 .45-.18.5-.42l.34-2.59c.62-.27 1.19-.62 1.71-1.02l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-                    <span class="hidden md:inline">Settings</span>
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.09-.75-1.71-1.02L14.3 2.5c-.05-.24-.27-.42-.5-.42h-4c-.23 0-.45.18-.5.42L8.03 5.09c-.62.27-1.19.62-1.71 1.02l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.64-.07.98s.03.66.07.98l-2.11-1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.09.75 1.71 1.02l.34 2.59c.05.24.27.42.5.42h4c.23 0 .45-.18.5-.42l.34-2.59c.62-.27 1.19-.62 1.71-1.02l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                    <span>Settings</span>
                 </button></li>
             </ul>
         </nav>
 
-        <!-- Main Content Area -->
         <main id="main-content" class="flex-grow md:ml-64 pb-20 md:pb-0">
-            <!-- Page content will be rendered here by JS -->
             <div id="home-page" class="p-6"></div>
             <div id="profile-page" class="p-6 hidden"></div>
             <div id="wallet-page" class="p-6 hidden"></div>
@@ -110,13 +118,11 @@
             <div id="settings-page" class="p-6 hidden"></div>
         </main>
 
-        <!-- Message Box -->
         <div id="message-box" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg hidden z-50 flex items-center justify-between">
             <span id="message-text"></span>
             <button id="message-close" class="ml-4 text-white font-bold">&times;</button>
         </div>
 
-        <!-- Tip Modal -->
         <div id="tip-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
             <div class="bg-white p-6 rounded-lg shadow-lg w-80">
                 <h3 class="text-xl font-bold mb-4">Tip <span id="tip-username"></span></h3>
@@ -129,7 +135,6 @@
             </div>
         </div>
 
-        <!-- Profile Edit Modal -->
         <div id="profile-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
             <div class="bg-white p-6 rounded-lg shadow-lg w-96">
                 <h3 class="text-xl font-bold mb-4">Edit Profile</h3>
@@ -150,21 +155,13 @@
 
     </div>
 
-    <!-- JavaScript for core logic, Supabase, and Solana -->
     <script type="module">
         // Supabase Client CDN
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm';
 
         // Solana Web3.js CDN
         import * as solanaWeb3 from 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.2/+esm';
         import * as splToken from 'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.13/+esm';
-
-        // Reown AppKit CDN for Vanilla JS
-        // This is the correct CDN for plain JS integration.
-        // The `jayson` error might be a transitive dependency issue within ReownAppKit.
-        // If it persists and causes issues, you might need to check Reown's support/issues.
-        import { AppKit, SolanaAdapter, networks } from 'https://cdn.jsdelivr.net/npm/@reown/appkit-cdn/dist/index.umd.js/+esm';
-
 
         // --- Configuration ---
         const GORBAGANA_RPC_URL = "https://rpc.gorbagana.wtf";
@@ -172,7 +169,7 @@
 
         // Supabase Configuration
         const SUPABASE_URL = "https://ehipnuszkzsxghsdtgox.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoaXBudXN6a3pzeGdoc2R0Z294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMDM2MzAsImV4cCI6MjA2Njg3OTYzMH0.z2nxeMEEmWMgnU_YYpWIzVCKXbXn0RFMAP6RDmQkCJQ";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGNpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoaXBudXN6a3pzeGdoc2R0Z294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMDM2MzAsImV4cCI6MjA2Njg3OTYzMH0.z2nxeMEEmWMgnU_YYpWIzVCKXbXn0RFMAP6RDmQkCJQ";
 
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -184,11 +181,15 @@
         let allUsers = {};
         let posts = []; // Cache for posts
         let currentPage = 'home'; // Default page
+        // FIX: Initialize these variables to prevent TypeError
+        let searchTerm = '';
+        let profileViewAddress = null; // Will be set to currentWalletAddress when profile is viewed
+        let profileActiveTab = 'posts'; // Default tab for profile page
 
-        // Reown AppKit Instances
-        let reownAdapter;
-        let reownAppKit;
-        let reownProvider; // The Solana provider from Reown
+        // Reown AppKit Instances (now managed manually for direct Phantom/Solana Web3.js)
+        let solanaConnection; // Solana Connection object (from @solana/web3.js)
+        let walletProvider = null; // This will hold window.solana (Phantom) or a custom provider
+
 
         // --- Utility Functions ---
         function showMessage(msg, type = 'success') {
@@ -212,88 +213,48 @@
             });
         }
 
-        // --- Wallet Connection (using Reown AppKit) ---
-        let solanaConnection; // Solana Connection object (from @solana/web3.js)
-
-        async function initReownAppKit() {
-            // Reown Project ID
-            const projectId = '293a2ffcca69577415197a2b8069f321'; // Your provided Project ID
-
-            // Metadata for AppKit - IMPORTANT: url must match your deployed domain
-            const metadata = {
-                name: 'GORTRASHSOCIAL',
-                description: 'Web3 Social App',
-                url: window.location.origin, // Dynamically set to current origin
-                icons: ['https://assets.reown.com/reown-profile-pic.png'] // Replace with your app's icon if available
-            };
-
-            reownAdapter = new SolanaAdapter({
-                projectId: projectId,
-                networks: [networks.solana, networks.solanaTestnet, networks.solanaDevnet],
-            });
-
-            reownAppKit = new AppKit({
-                adapters: [reownAdapter],
-                networks: [networks.solana, networks.solanaTestnet, networks.solanaDevnet],
-                metadata: metadata,
-                projectId: projectId,
-                features: {
-                    analytics: true
-                }
-            });
-
-            solanaConnection = new solanaWeb3.Connection(GORBAGANA_RPC_URL, 'confirmed');
-            console.log("Reown AppKit initialized.");
-        }
-
+        // --- Wallet Connection (Reverted to direct Phantom/Solana Web3.js) ---
         async function connectWallet() {
-            if (!reownAppKit) {
-                showMessage("Reown AppKit not initialized. Please refresh.", "error");
-                return;
-            }
-
-            showLoading(true);
-            try {
-                const session = await reownAppKit.open(); // This opens the Reown modal
-                
-                if (session && session.accounts && session.accounts.length > 0) {
-                    // Reown session.accounts will contain connected public keys
-                    currentWalletAddress = session.accounts[0]; // Get the first connected address
-                    reownProvider = reownAdapter.getProvider(); // Get the Solana provider from the adapter
-
-                    if (!reownProvider || !reownProvider.publicKey) {
-                        throw new Error("Failed to get Reown Solana provider or public key.");
-                    }
+            console.log("Attempting to connect wallet...");
+            if (window.solana && window.solana.isPhantom) {
+                showLoading(true);
+                try {
+                    const resp = await window.solana.connect();
+                    currentWalletAddress = resp.publicKey.toBase58();
+                    solanaConnection = new solanaWeb3.Connection(GORBAGANA_RPC_URL, 'confirmed');
+                    walletProvider = window.solana; // Assign Phantom as the provider
 
                     showMessage(`Wallet connected: ${currentWalletAddress.substring(0, 6)}...${currentWalletAddress.slice(-4)}`);
-                    renderApp(); // Re-render app content after connection
-
-                    // Fetch or create user profile in Supabase
+                    
+                    // Re-fetch user-specific data after successful connection
                     await fetchCurrentUserProfile();
                     await fetchWalletData();
                     await fetchNotifications();
-                    await fetchAllUsers(); // Fetch all users for trending/profiles
-                    await fetchPosts(); // Fetch posts after everything is ready
+                    
+                    renderApp(); // Re-render app content after connection and data fetch
 
-                } else {
-                    showMessage("Wallet connection cancelled or failed.", "error");
+                } catch (err) {
+                    console.error('Failed to connect wallet:', err);
+                    showMessage(`Failed to connect wallet: ${err.message || err.toString()}`, "error");
                     currentWalletAddress = null;
-                    renderApp();
+                    walletProvider = null;
+                    renderApp(); // Re-render to show disconnected state
+                } finally {
+                    showLoading(false);
                 }
-            } catch (err) {
-                console.error('Failed to connect wallet:', err);
-                showMessage(`Failed to connect wallet: ${err.message || err.toString()}`, "error");
-                currentWalletAddress = null;
-                renderApp();
-            } finally {
-                showLoading(false);
+            } else {
+                showMessage('Phantom wallet not found. Please install Phantom extension.', "error");
             }
         }
 
         // --- Supabase Data Management ---
 
         async function fetchCurrentUserProfile() {
-            if (!supabase || !currentWalletAddress) return;
+            console.log("Fetching current user profile..."); // Added log
+            if (!supabase || !currentWalletAddress) {
+                console.log("Supabase or wallet address not ready for profile fetch.");
+                return;
+            }
 
             const { data, error } = await supabase
                 .from('profiles')
@@ -301,11 +262,12 @@
                 .eq('wallet_address', currentWalletAddress)
                 .single();
 
-            if (error && error.code !== 'PGRST116') {
+            if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
                 console.error("Error fetching current user profile:", error);
                 showMessage("Failed to load your profile.", "error");
             } else if (data) {
                 currentUserProfile = data;
+                console.log("Current user profile fetched:", currentUserProfile); // Added log
             } else {
                 const defaultUsername = `User_${currentWalletAddress.substring(0, 8)}`;
                 const { error: insertError } = await supabase.from('profiles').insert({
@@ -322,12 +284,14 @@
                     showMessage("Failed to create default profile.", "error");
                 } else {
                     currentUserProfile = { wallet_address: currentWalletAddress, username: defaultUsername, bio: 'Hello, I am new here!', followers: [], following: [], tickets_earned: 0, blocked_users: [] };
+                    console.log("Default profile created:", currentUserProfile); // Added log
                 }
             }
-            renderProfilePage(); // Re-render profile if on that page
+            // renderProfilePage() is called by renderApp, no need to call here directly
         }
 
         async function fetchAllUsers() {
+            console.log("Fetching all users..."); // Added log
             if (!supabase) return;
             const { data, error } = await supabase
                 .from('profiles')
@@ -341,11 +305,13 @@
                     fetchedUsersMap[user.wallet_address] = user;
                 });
                 allUsers = fetchedUsersMap;
+                console.log("All users fetched:", allUsers); // Added log
             }
-            renderSearchPage(); // Re-render search page for trending users
+            // renderSearchPage() is called by renderApp, no need to call here directly
         }
 
         async function fetchWalletData() {
+            console.log("Fetching wallet data..."); // Added log
             if (!supabase || !currentWalletAddress) return;
             const { data, error } = await supabase
                 .from('wallets')
@@ -358,6 +324,7 @@
                 showMessage("Failed to load wallet data.", "error");
             } else if (data) {
                 walletData = data;
+                console.log("Wallet data fetched:", walletData); // Added log
             } else {
                 const { error: insertError } = await supabase.from('wallets').insert({
                     wallet_address: currentWalletAddress,
@@ -369,12 +336,14 @@
                     showMessage("Failed to create default wallet.", "error");
                 } else {
                     walletData = { wallet_address: currentWalletAddress, gor_balance: 0, tickets_holding: [] };
+                    console.log("Default wallet created:", walletData); // Added log
                 }
             }
-            renderWalletPage(); // Re-render wallet page
+            // renderWalletPage() is called by renderApp, no need to call here directly
         }
 
         async function fetchNotifications() {
+            console.log("Fetching notifications..."); // Added log
             if (!supabase || !currentWalletAddress) return;
             const { data, error } = await supabase
                 .from('notifications')
@@ -388,11 +357,13 @@
             } else {
                 notifications = data;
                 updateNotificationBadge();
+                console.log("Notifications fetched:", notifications); // Added log
             }
-            renderNotificationsPage(); // Re-render notifications page
+            // renderNotificationsPage() is called by renderApp, no need to call here directly
         }
 
         async function fetchPosts() {
+            console.log("Fetching posts..."); // Added log
             if (!supabase) return;
             const { data, error } = await supabase
                 .from('posts')
@@ -404,34 +375,36 @@
                 showMessage("Failed to load posts.", "error");
             } else {
                 posts = data;
+                console.log("Posts fetched:", posts); // Added log
             }
-            renderHomePage(); // Re-render home page
+            // renderHomePage() is called by renderApp, no need to call here directly
         }
 
         // --- Supabase Realtime Subscriptions ---
         function setupSupabaseRealtime() {
+            console.log("Setting up Supabase real-time subscriptions..."); // Added log
             if (!supabase) return;
 
             supabase
                 .from('posts')
-                .on('*', payload => { fetchPosts(); })
+                .on('*', payload => { console.log("Realtime: posts changed", payload); fetchPosts(); })
                 .subscribe();
 
             supabase
                 .from('profiles')
-                .on('*', payload => { fetchAllUsers(); fetchCurrentUserProfile(); })
+                .on('*', payload => { console.log("Realtime: profiles changed", payload); fetchAllUsers(); fetchCurrentUserProfile(); })
                 .subscribe();
 
             if (currentWalletAddress) {
                 supabase
                     .from('wallets')
-                    .on('*', payload => { fetchWalletData(); })
+                    .on('*', payload => { console.log("Realtime: wallets changed", payload); fetchWalletData(); })
                     .eq('wallet_address', currentWalletAddress)
                     .subscribe();
 
                 supabase
                     .from('notifications')
-                    .on('*', payload => { fetchNotifications(); })
+                    .on('*', payload => { console.log("Realtime: notifications changed", payload); fetchNotifications(); })
                     .eq('recipient_address', currentWalletAddress)
                     .subscribe();
             }
@@ -477,7 +450,8 @@
                 showMessage("Post content or image cannot be empty.", "error");
                 return;
             }
-            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+            // FIX: Check for walletProvider.publicKey existence
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !walletProvider || !walletProvider.publicKey) {
                 showMessage("Please connect your wallet first.", "error");
                 return;
             }
@@ -502,7 +476,6 @@
                     likes: [],
                     reposts: [],
                     likes_count: 0,
-                    reposts_count: 0,
                     comments_count: 0
                 });
 
@@ -512,6 +485,7 @@
                 } else {
                     document.getElementById('new-post-content').value = '';
                     postImageInput.value = ''; // Clear file input
+                    document.getElementById('selected-image-name').classList.add('hidden'); // Hide selected image name
                     showMessage("Post created successfully!");
                 }
             } catch (error) {
@@ -674,14 +648,9 @@
 
         async function handleProfileClick(profileAddress) {
             if (!supabase) return;
-            const userProfile = allUsers[profileAddress];
-            if (userProfile) {
-                renderProfilePage(userProfile);
-                currentPage = 'profile';
-                updateActiveNavButton();
-            } else {
-                showMessage("User profile not found.", "error");
-            }
+            profileViewAddress = profileAddress; // Set global variable
+            currentPage = 'profile'; // Set global variable
+            renderApp(); // Re-render the app to show the profile page
         }
 
         async function handleFollowToggle(targetAddress, isFollowing) {
@@ -781,7 +750,7 @@
         }
 
         async function handleBuyTicket(targetAddress) {
-            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !walletProvider || !walletProvider.publicKey) {
                 showMessage("Please connect your wallet first.", "error");
                 return;
             }
@@ -798,14 +767,14 @@
             try {
                 showMessage("Initiating ticket purchase transaction...", "info");
 
-                const buyerTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, reownProvider.publicKey);
+                const buyerTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, walletProvider.publicKey);
                 const receiverTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, new solanaWeb3.PublicKey(targetAddress));
 
                 const transaction = new solanaWeb3.Transaction().add(
                     splToken.createTransferInstruction(
                         buyerTokenAccount,
                         receiverTokenAccount,
-                        reownProvider.publicKey,
+                        walletProvider.publicKey,
                         1, // amount (1 GOR)
                         [],
                         splToken.TOKEN_PROGRAM_ID
@@ -814,10 +783,10 @@
 
                 const { blockhash } = await solanaConnection.getLatestBlockhash();
                 transaction.recentBlockhash = blockhash;
-                transaction.feePayer = reownProvider.publicKey;
+                transaction.feePayer = walletProvider.publicKey;
 
-                // Use reownProvider.sendTransaction
-                const signature = await reownProvider.sendTransaction(transaction, solanaConnection);
+                // Use walletProvider.sendTransaction
+                const signature = await walletProvider.sendTransaction(transaction, solanaConnection);
                 await solanaConnection.confirmTransaction(signature, 'processed');
 
                 showMessage("Ticket purchase transaction confirmed on-chain!", "success");
@@ -885,7 +854,7 @@
         }
 
         async function handleSellTicket(targetAddress) {
-            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !walletProvider || !walletProvider.publicKey) {
                 showMessage("Please connect your wallet first.", "error");
                 return;
             }
@@ -902,11 +871,11 @@
                 // --- Simulate on-chain transaction for selling ticket ---
                 // For this HTML version, we'll proceed with Supabase update after a simulated "transaction".
                 // You could add a dummy transaction here if desired, e.g.:
-                // const transaction = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({ fromPubkey: reownProvider.publicKey, toPubkey: reownProvider.publicKey, lamports: 1 }));
+                // const transaction = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({ fromPubkey: walletProvider.publicKey, toPubkey: walletProvider.publicKey, lamports: 1 }));
                 // const { blockhash } = await solanaConnection.getLatestBlockhash();
                 // transaction.recentBlockhash = blockhash;
-                // transaction.feePayer = reownProvider.publicKey;
-                // const signature = await reownProvider.sendTransaction(transaction, solanaConnection);
+                // transaction.feePayer = walletProvider.publicKey;
+                // const signature = await walletProvider.sendTransaction(transaction, solanaConnection);
                 // await solanaConnection.confirmTransaction(signature, 'processed');
                 // showMessage("Simulated ticket sale transaction confirmed on-chain!", "success");
 
@@ -955,7 +924,7 @@
 
 
         async function handleTip(targetAddress, amount) {
-            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !walletProvider || !walletProvider.publicKey) {
                 showMessage("Please connect your wallet first.", "error");
                 return;
             }
@@ -976,14 +945,27 @@
             try {
                 showMessage(`Initiating tip of ${amount} GOR to ${targetAddress.substring(0, 7)}...`, "info");
 
-                const senderTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, reownProvider.publicKey);
-                const receiverTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, new solanaWeb3.PublicKey(targetAddress));
-
+                const senderTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, walletProvider.publicKey);
+                // Ensure receiver token account exists or create it
+                let receiverTokenAccount;
+                try {
+                    receiverTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, new solanaWeb3.PublicKey(targetAddress));
+                } catch (e) {
+                    console.warn(`Receiver token account for ${targetAddress} not found, attempting to create.`, e);
+                    // This is simplified; in a real app, you'd handle associated token account creation on-chain
+                    // if it doesn't exist for the recipient. For this demo, we assume it generally exists or a different flow.
+                    // For the purpose of this demo, if the ATA doesn't exist, we'll just log and proceed with the simulated DB update.
+                    // A proper solution would involve `createAssociatedTokenAccountInstruction` and adding it to the transaction.
+                    showMessage("Recipient's GOR token account not found. Cannot complete on-chain tip.", "error");
+                    showLoading(false);
+                    return;
+                }
+                
                 const transaction = new solanaWeb3.Transaction().add(
                     splToken.createTransferInstruction(
                         senderTokenAccount,
                         receiverTokenAccount,
-                        reownProvider.publicKey,
+                        walletProvider.publicKey,
                         amount,
                         [],
                         splToken.TOKEN_PROGRAM_ID
@@ -992,9 +974,9 @@
 
                 const { blockhash } = await solanaConnection.getLatestBlockhash();
                 transaction.recentBlockhash = blockhash;
-                transaction.feePayer = reownProvider.publicKey;
+                transaction.feePayer = walletProvider.publicKey;
 
-                const signature = await reownProvider.sendTransaction(transaction, solanaConnection);
+                const signature = await walletProvider.sendTransaction(transaction, solanaConnection);
                 await solanaConnection.confirmTransaction(signature, 'processed');
 
                 showMessage("Tip transaction confirmed on-chain!", "success");
@@ -1112,7 +1094,7 @@
         }
 
         function handleSearch() {
-            // Re-render search page with current searchTerm
+            searchTerm = document.getElementById('search-input').value.trim(); // Update searchTerm
             renderSearchPage();
         }
 
@@ -1152,6 +1134,7 @@
         }
 
         function renderApp() {
+            console.log("Rendering app for page:", currentPage); // Added log
             hideAllPages();
             updateActiveNavButton();
 
@@ -1185,28 +1168,39 @@
         }
 
         function renderHomePage() {
+            console.log("Rendering home page, currentWalletAddress:", currentWalletAddress); // Added log
             const homePage = document.getElementById('home-page');
             const connectedStateHtml = `
-                <div class="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-200">
-                    <textarea id="new-post-content" class="w-full p-3 border border-gray-300 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none" rows="3" placeholder="What's happening?"></textarea>
-                    <input type="file" id="new-post-image" accept="image/*" class="mb-3 p-2 border border-gray-300 rounded-md w-full" />
-                    <p id="selected-image-name" class="text-sm text-gray-500 mb-2 hidden"></p>
-                    <button id="post-button" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-all duration-300 transform hover:scale-105">Post</button>
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Create New Post</h3>
+                    <textarea id="new-post-content" class="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none text-gray-700 placeholder-gray-400" rows="4" placeholder="What's happening in the GORTRASHSOCIAL world?"></textarea>
+                    <div class="flex items-center justify-between mb-4">
+                        <label for="new-post-image" class="cursor-pointer bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors duration-200 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-4 4 4 4-4V5h-4v10z" clip-rule="evenodd" />
+                            </svg>
+                            Add Image
+                        </label>
+                        <input type="file" id="new-post-image" accept="image/*" class="hidden" />
+                        <span id="selected-image-name" class="text-sm text-gray-500 hidden"></span>
+                    </div>
+                    <button id="post-button" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-lg">Post to GORTRASHSOCIAL</button>
                 </div>
-                <div id="posts-feed"></div>
+                <div id="posts-feed" class="mt-8 space-y-6"></div>
             `;
             const disconnectedStateHtml = `
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg shadow-md" role="alert">
-                    <p class="font-bold">Connect Your Wallet!</p>
-                    <p>To post, like, comment, and interact fully, please connect your Web3 wallet (e.g., Backpack, Phantom).</p>
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-6 mb-8 rounded-lg shadow-md text-center" role="alert">
+                    <p class="font-bold text-2xl mb-3">Welcome to GORTRASHSOCIAL!</p>
+                    <p class="text-lg mb-4">Connect your Web3 wallet to join the conversation, post your thoughts, and interact with the community.</p>
                     <div class="mt-3">
-                        <button id="connect-wallet-button" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors duration-200">Connect Wallet</button>
+                        <button id="connect-wallet-button" class="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-8 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-xl">Connect Wallet</button>
                     </div>
                 </div>
-                <div id="posts-feed"></div>
+                <div id="posts-feed" class="mt-8 space-y-6"></div>
             `;
 
             homePage.innerHTML = currentWalletAddress ? connectedStateHtml : disconnectedStateHtml;
+            console.log("Home page HTML set. Current wallet address:", currentWalletAddress); // Added log
 
             // Attach event listeners after rendering HTML
             if (currentWalletAddress) {
@@ -1230,10 +1224,11 @@
 
         async function renderPostsFeed() {
             const postsFeed = document.getElementById('posts-feed');
-            postsFeed.innerHTML = '<p class="text-gray-400">Loading posts...</p>';
+            console.log("Rendering posts feed, current posts data:", posts); // Added log
+            postsFeed.innerHTML = '<p class="text-gray-500 text-center py-8">Loading posts...</p>';
 
             if (posts.length === 0) {
-                postsFeed.innerHTML = '<p class="text-gray-400">No posts yet. Be the first to post!</p>';
+                postsFeed.innerHTML = '<p class="text-gray-500 text-center py-8">No posts yet. Be the first to share something!</p>';
                 return;
             }
 
@@ -1271,47 +1266,47 @@
                 }
 
                 postsHtml += `
-                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
-                        ${post.reposts && post.reposts.includes(currentWalletAddress) ? `<p class="text-sm text-gray-500 mb-2"><span class="text-green-600 font-semibold">You </span>reposted this</p>` : ''}
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-lg mr-3 cursor-pointer" data-wallet-address="${post.author_address}">
+                    <div class="bg-white p-6 rounded-xl shadow-lg mb-4 border border-gray-200 transform transition-transform duration-200 hover:-translate-y-1">
+                        ${post.reposts && post.reposts.includes(currentWalletAddress) ? `<p class="text-sm text-gray-500 mb-3 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" /></svg><span class="text-green-600 font-semibold">You </span>reposted this</p>` : ''}
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-xl mr-4 border-2 border-green-400 cursor-pointer" data-wallet-address="${post.author_address}">
                                 ${authorName[0].toUpperCase()}
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-800 cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
+                                <p class="font-semibold text-gray-800 text-lg cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
                                 <p class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</p>
                             </div>
                         </div>
-                        <p class="text-gray-700 mb-4">${post.content}</p>
-                        ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
-                        <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-2">
-                            <button class="flex items-center space-x-1 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <p class="text-gray-700 text-base mb-4 leading-relaxed">${post.content}</p>
+                        ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
+                        <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-3 mt-4">
+                            <button class="flex items-center space-x-2 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                 <span>${post.likes_count || 0}</span>
                             </button>
-                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                            <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
                                 <span>${post.comments_count || 0}</span>
                             </button>
-                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                            <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
                                 <span>${post.reposts_count || 0}</span>
                             </button>
                             ${!isAuthor && currentWalletAddress ? `
-                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                                <span>Tip</span>
+                            <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <span class="font-medium">Tip</span>
                             </button>
                             ` : ''}
                         </div>
-                        <div id="comments-section-${post.id}" class="comments-section mt-4 pt-3 border-t border-gray-200 hidden">
-                            <h4 class="font-semibold mb-2 text-gray-700">Comments</h4>
-                            <div id="comments-list-${post.id}" class="space-y-2 text-sm">
+                        <div id="comments-section-${post.id}" class="comments-section mt-4 pt-4 border-t border-gray-200 hidden">
+                            <h4 class="font-semibold text-gray-700 mb-3">Comments</h4>
+                            <div id="comments-list-${post.id}" class="space-y-3 text-sm">
                                 ${commentsHtml}
                             </div>
-                            <div class="flex mt-3">
-                                <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <button class="post-comment-button bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600 transition-colors duration-200" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
+                            <div class="flex mt-4">
+                                <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-gray-700 placeholder-gray-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <button class="post-comment-button bg-green-500 text-white px-5 py-3 rounded-r-lg hover:bg-green-600 transition-colors duration-200 font-medium" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
                             </div>
                         </div>
                     </div>
@@ -1324,9 +1319,39 @@
                 button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
             });
             postsFeed.querySelectorAll('.comment-toggle-button').forEach(button => {
-                button.onclick = () => {
+                button.onclick = async () => { // Make async to fetch comments
                     const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
                     commentsSection.classList.toggle('hidden');
+                    if (!commentsSection.classList.contains('hidden')) {
+                        const { data: commentsData, error: commentsError } = await supabase
+                            .from('comments')
+                            .select('*')
+                            .eq('post_id', button.dataset.postId)
+                            .order('created_at', { ascending: true });
+
+                        const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
+                        commentsListDiv.innerHTML = ''; // Clear loading message
+
+                        if (commentsError) {
+                            console.error("Error fetching comments:", commentsError);
+                            commentsListDiv.innerHTML = '<p class="text-red-400">Error loading comments.</p>';
+                        } else if (commentsData && commentsData.length > 0) {
+                            let loadedCommentsHtml = '';
+                            for (const comment of commentsData) {
+                                const commentAuthorName = allUsers[comment.author_address]?.username || comment.username || comment.author_address.substring(0, 6) + '...' + comment.author_address.slice(-4);
+                                loadedCommentsHtml += `
+                                    <div class="bg-gray-50 p-3 rounded-lg mb-2 text-sm border border-gray-100">
+                                        <p class="font-semibold text-gray-800">${commentAuthorName}</p>
+                                        <p class="text-gray-700">${comment.content}</p>
+                                        <p class="text-xs text-gray-500">${new Date(comment.created_at).toLocaleString()}</p>
+                                    </div>
+                                `;
+                            }
+                            commentsListDiv.innerHTML = loadedCommentsHtml;
+                        } else {
+                            commentsListDiv.innerHTML = '<p class="text-gray-500 text-sm">No comments yet. Be the first!</p>';
+                        }
+                    }
                 };
             });
             postsFeed.querySelectorAll('.repost-button').forEach(button => {
@@ -1361,7 +1386,7 @@
         function renderProfilePage(userProfile) {
             const profilePage = document.getElementById('profile-page');
             if (!userProfile) {
-                profilePage.innerHTML = '<p class="text-center text-gray-500">Profile not found or loading...</p>';
+                profilePage.innerHTML = '<p class="text-center text-gray-500 py-8">Profile not found or loading...</p>';
                 return;
             }
 
@@ -1375,38 +1400,38 @@
             contentToDisplay.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             profilePage.innerHTML = `
-                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
-                    <div class="flex flex-col md:flex-row items-center md:items-start mb-4">
-                        <div class="w-28 h-28 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-5xl mr-0 md:mr-6 mb-4 md:mb-0 border-4 border-green-400 flex-shrink-0">
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                    <div class="flex flex-col md:flex-row items-center md:items-start mb-6">
+                        <div class="w-32 h-32 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-6xl mr-0 md:mr-8 mb-4 md:mb-0 border-4 border-green-400 flex-shrink-0 shadow-inner">
                             ${userProfile.username ? userProfile.username[0].toUpperCase() : 'U'}
                         </div>
                         <div class="text-center md:text-left flex-grow">
-                            <h2 class="text-3xl font-bold text-gray-800 mb-1">${userProfile.username || 'Anonymous'}</h2>
-                            <p class="text-gray-600 text-md mb-3">${userProfile.bio || 'No bio yet.'}</p>
-                            <p class="text-sm text-gray-500 mb-4">Wallet Address: <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded inline-block">${userProfile.wallet_address?.substring(0, 7)}...${userProfile.wallet_address?.slice(-4)}</span></p>
+                            <h2 class="text-4xl font-bold text-gray-800 mb-2">${userProfile.username || 'Anonymous'}</h2>
+                            <p class="text-gray-600 text-lg mb-4 leading-snug">${userProfile.bio || 'No bio yet. Click Edit Profile to add one!'}</p>
+                            <p class="text-sm text-gray-500 mb-4">Wallet Address: <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded-md inline-block select-all">${userProfile.wallet_address?.substring(0, 7)}...${userProfile.wallet_address?.slice(-4)}</span></p>
 
-                            <div class="flex flex-wrap justify-center md:justify-start space-x-6 text-lg mb-4">
-                                <p class="text-gray-700">Followers: <span class="font-semibold text-green-600">${userProfile.followers?.length || 0}</span></p>
-                                <p class="text-gray-700">Following: <span class="font-semibold text-blue-600">${userProfile.following?.length || 0}</span></p>
-                                <p class="text-gray-700">Tickets: <span class="font-semibold text-purple-600">${userProfile.tickets_earned || 0}</span></p>
+                            <div class="flex flex-wrap justify-center md:justify-start space-x-6 text-xl mb-4 font-semibold">
+                                <p class="text-gray-700">Followers: <span class="text-green-600">${userProfile.followers?.length || 0}</span></p>
+                                <p class="text-gray-700">Following: <span class="text-blue-600">${userProfile.following?.length || 0}</span></p>
+                                <p class="text-gray-700">Tickets: <span class="text-purple-600">${userProfile.tickets_earned || 0}</span></p>
                             </div>
 
-                            <div class="flex flex-wrap justify-center md:justify-start space-x-3 mt-4 gap-2">
+                            <div class="flex flex-wrap justify-center md:justify-start space-x-3 mt-4 gap-3">
                                 ${isCurrentUserProfile ? `
-                                    <button id="edit-profile-button" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors duration-200 shadow-md">
+                                    <button id="edit-profile-button" class="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-base">
                                         Edit Profile
                                     </button>
                                 ` : `
-                                    <button id="follow-toggle-button" class="py-2 px-4 rounded-md transition-colors duration-200 shadow-md ${isFollowing ? 'bg-gray-300 text-gray-800 hover:bg-gray-400' : 'bg-green-500 text-white hover:bg-green-600'}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                    <button id="follow-toggle-button" class="py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-base ${isFollowing ? 'bg-gray-300 text-gray-800 hover:bg-gray-400' : 'bg-gradient-to-r from-green-500 to-green-600 text-white'}" ${!currentWalletAddress ? 'disabled' : ''}>
                                         ${isFollowing ? 'Unfollow' : 'Follow'}
                                     </button>
-                                    <button id="block-user-button" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors duration-200 shadow-md" ${!currentWalletAddress ? 'disabled' : ''}>
+                                    <button id="block-user-button" class="bg-red-500 text-white py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-base" ${!currentWalletAddress ? 'disabled' : ''}>
                                         Block
                                     </button>
-                                    <button id="buy-ticket-button" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-200 shadow-md" ${!currentWalletAddress ? 'disabled' : ''}>
+                                    <button id="buy-ticket-button" class="bg-blue-500 text-white py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-base" ${!currentWalletAddress ? 'disabled' : ''}>
                                         Buy Ticket (1 GOR)
                                     </button>
-                                    <button id="tip-user-profile-button" class="bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition-colors duration-200 shadow-md" ${!currentWalletAddress ? 'disabled' : ''}>
+                                    <button id="tip-user-profile-button" class="bg-yellow-500 text-white py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-base" ${!currentWalletAddress ? 'disabled' : ''}>
                                         Tip 10 GOR
                                     </button>
                                 `}
@@ -1415,7 +1440,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-200">
+                <div class="bg-white p-4 rounded-xl shadow-lg mb-6 border border-gray-200">
                     <div class="flex border-b border-gray-200 mb-4">
                         <button id="posts-tab-button" class="flex-1 py-3 text-lg font-semibold transition-colors duration-200 ${profileActiveTab === 'posts' ? 'text-green-700 border-b-2 border-green-700' : 'text-gray-500 hover:text-gray-700'}">
                             Posts (${userPosts.length})
@@ -1424,7 +1449,7 @@
                             Reposts (${userReposts.length})
                         </button>
                     </div>
-                    <div id="profile-posts-feed"></div>
+                    <div id="profile-posts-feed" class="space-y-6"></div>
                 </div>
             `;
 
@@ -1445,7 +1470,7 @@
                 const tipProfileBtn = document.getElementById('tip-user-profile-button');
                 if (tipProfileBtn) tipProfileBtn.onclick = () => {
                     document.getElementById('tip-username').textContent = userProfile.username;
-                    document.getElementById('tip-confirm').onclick = () => handleTip(userProfile.wallet_address, 10); // Default tip 10 GOR
+                    document.getElementById('tip-confirm').onclick = () => handleTip(userProfile.wallet_address, parseInt(document.getElementById('tip-amount').value));
                     document.getElementById('tip-modal').classList.remove('hidden');
                 };
             }
@@ -1479,47 +1504,46 @@
                 let commentsHtml = '<p class="text-gray-500 text-sm">Comments load on demand...</p>'; // Simplified for performance
 
                 postsHtml += `
-                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
-                        ${post.reposts && post.reposts.includes(currentWalletAddress) && isCurrentUserProfile ? `<p class="text-sm text-gray-500 mb-2"><span class="text-green-600 font-semibold">You </span>reposted this</p>` : ''}
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-lg mr-3 cursor-pointer" data-wallet-address="${post.author_address}">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 transform transition-transform duration-200 hover:-translate-y-1">
+                        ${post.reposts && post.reposts.includes(currentWalletAddress) && isCurrentUserProfile ? `<p class="text-sm text-gray-500 mb-3 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" /></svg><span class="text-green-600 font-semibold">You </span>reposted this</p>` : ''}
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-xl mr-4 border-2 border-green-400 cursor-pointer" data-wallet-address="${post.author_address}">
                                 ${authorName[0].toUpperCase()}
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-800 cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
+                                <p class="font-semibold text-gray-800 text-lg cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
                                 <p class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</p>
                             </div>
                         </div>
-                        <p class="text-gray-700 mb-4">${post.content}</p>
-                        ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
-                        <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-2">
-                            <button class="flex items-center space-x-1 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                <span>${post.likes_count || 0}</span>
+                        <p class="text-gray-700 text-base mb-4 leading-relaxed">${post.content}</p>
+                        ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
+                        <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-3 mt-4">
+                            <button class="flex items-center space-x-2 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <span class="font-medium">${post.likes_count || 0}</span>
                             </button>
-                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
-                                <span>${post.comments_count || 0}</span>
+                            <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                <span class="font-medium">${post.comments_count || 0}</span>
                             </button>
-                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
-                                <span>${post.reposts_count || 0}</span>
+                            <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                <span class="font-medium">${post.reposts_count || 0}</span>
                             </button>
                             ${!postIsAuthor && currentWalletAddress ? `
-                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
-                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                                <span>Tip</span>
+                            <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
+                                <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <span class="font-medium">Tip</span>
                             </button>
                             ` : ''}
                         </div>
-                        <div id="comments-section-${post.id}" class="comments-section mt-4 pt-3 border-t border-gray-200 hidden">
-                            <h4 class="font-semibold mb-2 text-gray-700">Comments</h4>
-                            <div id="comments-list-${post.id}" class="space-y-2 text-sm">
-                                <!-- Comments will be loaded here dynamically -->
-                            </div>
-                            <div class="flex mt-3">
-                                <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                <button class="post-comment-button bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600 transition-colors duration-200" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
+                        <div id="comments-section-${post.id}" class="comments-section mt-4 pt-4 border-t border-gray-200 hidden">
+                            <h4 class="font-semibold text-gray-700 mb-3">Comments</h4>
+                            <div id="comments-list-${post.id}" class="space-y-3 text-sm">
+                                </div>
+                            <div class="flex mt-4">
+                                <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-gray-700 placeholder-gray-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <button class="post-comment-button bg-green-500 text-white px-5 py-3 rounded-r-lg hover:bg-green-600 transition-colors duration-200 font-medium" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
                             </div>
                         </div>
                     </div>
@@ -1536,7 +1560,6 @@
                     const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
                     commentsSection.classList.toggle('hidden');
                     if (!commentsSection.classList.contains('hidden')) {
-                        // Fetch and display comments when section is shown
                         const { data: commentsData, error: commentsError } = await supabase
                             .from('comments')
                             .select('*')
@@ -1618,7 +1641,7 @@
                 </header>
 
                 <section class="max-w-4xl mx-auto mt-6 px-6">
-                    <div class="bg-white p-6 rounded-lg shadow-lg mb-6 border border-green-300">
+                    <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-green-300">
                         <h2 class="text-lg font-semibold text-[#0A7740] mb-2">Main Balance</h2>
                         <p class="text-4xl font-bold text-[#1C1C1E]">${walletData.gor_balance.toFixed(3)} GOR</p>
                         <p class="text-sm text-gray-500">Approx. $${(walletData.gor_balance * 0.8).toFixed(2)}</p>
@@ -1628,7 +1651,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-lg shadow-lg mb-6 border border-green-300">
+                    <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-green-300">
                         <h2 class="text-lg font-semibold text-[#0A7740] mb-4">🎟️ Tickets You Hold</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             ${walletData.tickets_holding.length > 0 ?
@@ -1654,7 +1677,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-lg shadow-lg border border-green-300">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-green-300">
                         <h2 class="text-lg font-semibold text-[#0A7740] mb-4">🧾 Recent Activity</h2>
                         <ul class="space-y-2 text-sm text-gray-700">
                             <li>✅ Wallet connected <span class="text-gray-400">(just now)</span></li>
@@ -1665,11 +1688,11 @@
                 </section>
             `;
             const disconnectedStateHtml = `
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg shadow-md" role="alert">
-                    <p class="font-bold">Connect Your Wallet!</p>
-                    <p>To view your wallet, please connect your Web3 wallet (e.g., Backpack, Phantom).</p>
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-6 mb-8 rounded-lg shadow-md text-center" role="alert">
+                    <p class="font-bold text-2xl mb-3">Connect Your Wallet!</p>
+                    <p class="text-lg mb-4">To view your wallet, please connect your Web3 wallet (e.g., Backpack, Phantom).</p>
                     <div class="mt-3">
-                        <button id="connect-wallet-button" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors duration-200">Connect Wallet</button>
+                        <button id="connect-wallet-button" class="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-8 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-xl">Connect Wallet</button>
                     </div>
                 </div>
             `;
@@ -1691,19 +1714,26 @@
 
         function renderNotificationsPage() {
             const notificationsPage = document.getElementById('notifications-page');
-            let notificationsHtml = '<h2 class="text-2xl font-bold text-gray-800 mb-4">Notifications</h2>';
+            let notificationsHtml = `
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Notifications</h2>
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 space-y-4">
+            `;
             if (notifications.length > 0) {
                 notifications.forEach(notification => {
                     notificationsHtml += `
-                        <div class="bg-white p-4 rounded-lg shadow-md mb-3 border border-gray-200 cursor-pointer transition-all duration-200 ${notification.read ? 'opacity-70' : 'bg-green-50 hover:bg-green-100'}" data-notification-id="${notification.id}">
-                            <p class="text-gray-800">${notification.message}</p>
-                            <p class="text-sm text-gray-500">${new Date(notification.created_at).toLocaleString()}</p>
+                        <div class="p-4 rounded-lg transition-all duration-200 ${notification.read ? 'bg-gray-50 text-gray-600 opacity-80' : 'bg-green-50 text-green-800 font-semibold hover:bg-green-100'} cursor-pointer flex justify-between items-center border border-gray-200" data-notification-id="${notification.id}">
+                            <div>
+                                <p class="text-lg">${notification.message}</p>
+                                <p class="text-sm text-gray-500">${new Date(notification.created_at).toLocaleString()}</p>
+                            </div>
+                            ${!notification.read ? `<span class="text-green-600 text-xs font-bold">NEW</span>` : ''}
                         </div>
                     `;
                 });
             } else {
-                notificationsHtml += '<p class="text-center text-gray-500">No new notifications.</p>';
+                notificationsHtml += '<p class="text-center text-gray-500 py-8">No new notifications.</p>';
             }
+            notificationsHtml += `</div>`; // Close the main content div
             notificationsPage.innerHTML = notificationsHtml;
 
             notificationsPage.querySelectorAll('[data-notification-id]').forEach(element => {
@@ -1729,35 +1759,35 @@
             const trendingUsers = getTrendingUsers();
 
             let searchHtml = `
-                <div class="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-200 flex">
-                    <input type="text" id="search-input" placeholder="Search posts or users..." class="flex-grow p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" value="${searchTerm}">
-                    <button id="search-button" class="bg-green-500 text-white px-6 py-3 rounded-r-md hover:bg-green-600 transition-colors duration-200">Search</button>
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200 flex items-center space-x-3">
+                    <input type="text" id="search-input" placeholder="Search posts or users..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-gray-700 placeholder-gray-400" value="${searchTerm}">
+                    <button id="search-button" class="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-bold text-base">Search</button>
                 </div>
             `;
 
             if (searchTerm.trim() === '') {
                 searchHtml += `
-                    <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">🔥 Trending Users</h3>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-5">🔥 Trending Users</h3>
+                        <div class="space-y-4">
                         ${trendingUsers.length > 0 ? `
-                            <ul class="space-y-3">
-                                ${trendingUsers.map(user => `
-                                    <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors duration-200" data-wallet-address="${user.wallet_address}">
-                                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold">
-                                            ${user.username ? user.username[0].toUpperCase() : 'U'}
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-gray-800">${user.username}</p>
-                                            <p class="text-sm text-gray-500">
-                                                ${user.followers?.length || 0} Followers • ${user.tickets_earned || 0} Tickets
-                                            </p>
-                                        </div>
-                                    </li>
-                                `).join('')}
-                            </ul>
+                            ${trendingUsers.map(user => `
+                                <div class="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200 border border-gray-100" data-wallet-address="${user.wallet_address}">
+                                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-xl flex-shrink-0">
+                                        ${user.username ? user.username[0].toUpperCase() : 'U'}
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="font-semibold text-gray-800 text-lg">${user.username}</p>
+                                        <p class="text-sm text-gray-500">
+                                            ${user.followers?.length || 0} Followers • ${user.tickets_earned || 0} Tickets
+                                        </p>
+                                    </div>
+                                </div>
+                            `).join('')}
                         ` : `
-                            <p class="text-center text-gray-500">No trending users yet.</p>
+                            <p class="text-center text-gray-500 py-8">No trending users yet.</p>
                         `}
+                        </div>
                     </div>
                 `;
             } else {
@@ -1765,10 +1795,10 @@
                     post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     post.username.toLowerCase().includes(searchTerm.toLowerCase())
                 );
-                searchHtml += `<h3 class="text-xl font-bold text-gray-800 mb-4">Search Results</h3>`;
+                searchHtml += `<h3 class="text-2xl font-bold text-gray-800 mb-5 mt-8">Search Results</h3>`;
                 if (filteredPosts.length > 0) {
                     // Re-use Post rendering logic (simplified for HTML)
-                    let postsContentHtml = '';
+                    let postsContentHtml = '<div class="space-y-6">'; // Container for posts
                     for(const post of filteredPosts) {
                         const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
                         const isLiked = post.likes && post.likes.includes(currentWalletAddress);
@@ -1776,54 +1806,53 @@
                         const isAuthor = post.author_address === currentWalletAddress;
 
                         postsContentHtml += `
-                            <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
-                                <div class="flex items-center mb-3">
-                                    <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-lg mr-3 cursor-pointer" data-wallet-address="${post.author_address}">
+                            <div class="bg-white p-6 rounded-xl shadow-lg mb-4 border border-gray-200 transform transition-transform duration-200 hover:-translate-y-1">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-xl mr-4 border-2 border-green-400 cursor-pointer" data-wallet-address="${post.author_address}">
                                         ${authorName[0].toUpperCase()}
                                     </div>
                                     <div>
-                                        <p class="font-semibold text-gray-800 cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
+                                        <p class="font-semibold text-gray-800 text-lg cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
                                         <p class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</p>
                                     </div>
                                 </div>
-                                <p class="text-gray-700 mb-4">${post.content}</p>
-                                ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
-                                <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-2">
-                                    <button class="flex items-center space-x-1 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                        <span>${post.likes_count || 0}</span>
+                                <p class="text-gray-700 text-base mb-4 leading-relaxed">${post.content}</p>
+                                ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
+                                <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-3 mt-4">
+                                    <button class="flex items-center space-x-2 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                        <span class="font-medium">${post.likes_count || 0}</span>
                                     </button>
-                                    <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
-                                        <span>${post.comments_count || 0}</span>
+                                    <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                        <span class="font-medium">${post.comments_count || 0}</span>
                                     </button>
-                                    <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
-                                        <span>${post.reposts_count || 0}</span>
+                                    <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                        <span class="font-medium">${post.reposts_count || 0}</span>
                                     </button>
                                     ${!isAuthor && currentWalletAddress ? `
-                                    <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
-                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                                        <span>Tip</span>
+                                    <button class="flex items-center space-x-2 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
+                                        <svg class="w-5 h-5 fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                        <span class="font-medium">Tip</span>
                                     </button>
                                     ` : ''}
                                 </div>
-                                <div id="comments-section-${post.id}" class="comments-section mt-4 pt-3 border-t border-gray-200 hidden">
-                                    <h4 class="font-semibold mb-2 text-gray-700">Comments</h4>
-                                    <div id="comments-list-${post.id}" class="space-y-2 text-sm">
-                                        <!-- Comments will be loaded here dynamically -->
-                                    </div>
-                                    <div class="flex mt-3">
-                                        <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
-                                        <button class="post-comment-button bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600 transition-colors duration-200" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
+                                <div id="comments-section-${post.id}" class="comments-section mt-4 pt-4 border-t border-gray-200 hidden">
+                                    <h4 class="font-semibold text-gray-700 mb-3">Comments</h4>
+                                    <div id="comments-list-${post.id}" class="space-y-3 text-sm">
+                                        </div>
+                                    <div class="flex mt-4">
+                                        <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-gray-700 placeholder-gray-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <button class="post-comment-button bg-green-500 text-white px-5 py-3 rounded-r-lg hover:bg-green-600 transition-colors duration-200 font-medium" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
                                     </div>
                                 </div>
                             </div>
                         `;
                     }
-                    searchHtml += postsContentHtml;
+                    searchHtml += postsContentHtml + '</div>'; // Close the posts container
                 } else {
-                    searchHtml += `<p class="text-center text-gray-500">No results found for "${searchTerm}".</p>`;
+                    searchHtml += `<p class="text-center text-gray-500 py-8">No results found for "${searchTerm}".</p>`;
                 }
             }
             searchPage.innerHTML = searchHtml;
@@ -1853,7 +1882,7 @@
                             .order('created_at', { ascending: true });
 
                         const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
-                        commentsListDiv.innerHTML = '';
+                        commentsListDiv.innerHTML = ''; // Clear loading message
 
                         if (commentsError) {
                             console.error("Error fetching comments:", commentsError);
@@ -1905,44 +1934,44 @@
         function renderSettingsPage() {
             const settingsPage = document.getElementById('settings-page');
             settingsPage.innerHTML = `
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Settings</h2>
 
-                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">General</h3>
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">General Information</h3>
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">App Version:</label>
                         <p class="text-gray-600">1.0.0</p>
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Connected Wallet Address:</label>
-                        ${currentWalletAddress ? `<p class="text-gray-600 font-mono text-sm bg-gray-100 px-2 py-1 rounded inline-block">${currentWalletAddress}</p>` : `<p class="text-red-500">No wallet connected.</p>`}
+                        ${currentWalletAddress ? `<p class="text-gray-600 font-mono text-sm bg-gray-100 px-3 py-1 rounded-md inline-block select-all">${currentWalletAddress}</p>` : `<p class="text-red-500">No wallet connected.</p>`}
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Theme:</label>
                         <div class="flex items-center space-x-4">
-                            <button class="bg-green-500 text-white px-4 py-2 rounded-md">Green & White (Default)</button>
+                            <button class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors duration-200">Green & White (Default)</button>
                             <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md cursor-not-allowed opacity-70">Dark Mode (Coming Soon)</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Notifications</h3>
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Notification Preferences</h3>
                     <div class="flex items-center justify-between mb-3">
-                        <label for="pushNotifications" class="text-gray-700">Enable Push Notifications</label>
+                        <label for="pushNotifications" class="text-gray-700 text-base">Enable Push Notifications</label>
                         <input type="checkbox" id="pushNotifications" class="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-400" checked />
                     </div>
                     <div class="flex items-center justify-between">
-                        <label for="emailNotifications" class="text-gray-700">Email Notifications</label>
+                        <label for="emailNotifications" class="text-gray-700 text-base">Email Notifications</label>
                         <input type="checkbox" id="emailNotifications" class="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-400" />
                     </div>
-                    <p class="text-sm text-gray-500 mt-2">Note: These are placeholder settings for demonstration.</p>
+                    <p class="text-sm text-gray-500 mt-3">Note: These are placeholder settings for demonstration.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">About</h3>
-                    <p class="text-gray-700">This is a Web3-aligned social application, inspired by Twitter, built to demonstrate decentralized interaction concepts.</p>
-                    <p class="text-gray-700 mt-2">Developed using HTML, CSS, and JavaScript with Supabase for data and Solana for blockchain interactions.</p>
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">About GORTRASHSOCIAL</h3>
+                    <p class="text-gray-700 leading-relaxed">This is a Web3-aligned social application, inspired by Twitter, built to demonstrate decentralized interaction concepts on the Solana blockchain.</p>
+                    <p class="text-gray-700 mt-3 leading-relaxed">Developed using HTML, CSS, and JavaScript with Supabase for scalable data storage and Reown AppKit for seamless Solana wallet interactions.</p>
                 </div>
             `;
         }
@@ -1970,14 +1999,29 @@
 
 
         // Initial render when script loads
-        document.addEventListener('DOMContentLoaded', async () => { // Made async to await initReownAppKit
-            await initReownAppKit(); // Initialize Reown AppKit first
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("DOM Content Loaded. Starting initial app setup.");
+            
+            // Initialize Solana Connection globally once
+            solanaConnection = new solanaWeb3.Connection(GORBAGANA_RPC_URL, 'confirmed');
+            console.log("Solana Connection initialized.");
+
             // Check if Supabase is ready before initial render
-            const checkSupabaseReady = setInterval(() => {
+            const checkSupabaseReady = setInterval(async () => { // Made async to await data fetches
                 if (supabase && supabase.from && supabase.storage) {
                     clearInterval(checkSupabaseReady);
+                    console.log("Supabase ready. Performing initial data fetches and render.");
+                    // Fetch initial data before rendering the app
+                    await fetchAllUsers(); // Populate allUsers first
+                    await fetchPosts();    // Populate posts
+                    // Only fetch user-specific data if wallet is connected (this will be null initially, but will be called again after connectWallet)
+                    // We don't call fetchCurrentUserProfile, fetchWalletData, fetchNotifications here
+                    // because they depend on currentWalletAddress which is null initially.
+                    // These will be called after connectWallet() is successful.
                     renderApp(); // Initial render of the app
                     setupSupabaseRealtime(); // Setup real-time listeners
+                } else {
+                    console.log("Waiting for Supabase to be ready...");
                 }
             }, 100); // Check every 100ms
         });
