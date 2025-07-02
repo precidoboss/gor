@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Social App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Solana Wallet Adapter UI styles - No longer strictly needed for Reown, but kept for general styling -->
+    <link rel="stylesheet" href="https://unpkg.com/@solana/wallet-adapter-react-ui@latest/styles.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            background-color: #f3f4f6; /* Light gray background */
+            color: #1f2937; /* Dark gray text */
+        }
+        /* Custom animations for messages */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(20px); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInOut 3s ease-in-out forwards;
+        }
+        /* Animation for notification badge */
+        @keyframes bounceFadeIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-fade-in {
+            animation: bounceFadeIn 0.5s ease-out;
+        }
+        /* For wallet header notification ping */
+        @keyframes ping-once {
+            0% { transform: scale(0.2); opacity: 0.8; }
+            80% { transform: scale(1.8); opacity: 0; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+        .animate-ping-once {
+            animation: ping-once 1s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+        /* General rounded corners */
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-md { border-radius: 0.375rem; }
+        .rounded-full { border-radius: 9999px; }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .md\:flex-row { flex-direction: row; }
+            .md\:ml-64 { margin-left: 16rem; }
+            .md\:static { position: static; }
+            .md\:w-64 { width: 16rem; }
+            .md\:p-6 { padding: 1.5rem; }
+            .md\:border-r { border-right-width: 1px; }
+            .md\:items-start { align-items: flex-start; }
+            .md\:justify-start { justify-content: flex-start; }
+            .md\:space-x-0 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(0px * var(--tw-space-x-reverse)); margin-left: calc(0px * (1 - var(--tw-space-x-reverse))); }
+            .md\:space-y-4 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(1rem * (1 - var(--tw-space-y-reverse))); margin-bottom: calc(1rem * var(--tw-space-y-reverse)); }
+            .md\:text-left { text-align: left; }
+            .md\:mb-0 { margin-bottom: 0; }
+            .md\:mr-6 { margin-right: 1.5rem; }
+        }
+    </style>
+</head>
+<body class="text-gray-900">
+    <div id="app-root" class="min-h-screen bg-gray-100 font-sans text-gray-900 flex flex-col md:flex-row">
+        <!-- Sidebar Navigation (will be dynamically populated by JS) -->
+        <nav id="sidebar-nav" class="bg-white shadow-md md:w-64 p-4 md:p-6 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-start border-b md:border-r border-gray-200 fixed bottom-0 md:static w-full z-40">
+            <div class="hidden md:block mb-8 text-2xl font-bold text-green-700">Web3 Social</div>
+            <ul id="nav-links" class="flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-4 w-full justify-around md:justify-start">
+                <li><button id="home-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span class="hidden md:inline">Home</span>
+                </button></li>
+                <li><button id="profile-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <span class="hidden md:inline">Profile</span>
+                </button></li>
+                <li><button id="wallet-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                    <span class="hidden md:inline">Wallet</span>
+                </button></li>
+                <li><button id="notifications-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V9c0-3.07-1.63-5.64-4.5-6.32V2.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.18C7.63 3.36 6 5.93 6 9v7l-2 2v1h16v-1l-2-2z"/></svg>
+                    <span class="hidden md:inline">Notifications</span>
+                    <span id="notification-badge" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full hidden">0</span>
+                </button></li>
+                <li><button id="search-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <span class="hidden md:inline">Search</span>
+                </button></li>
+                <li><button id="settings-nav" class="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.09-.75-1.71-1.02L14.3 2.5c-.05-.24-.27-.42-.5-.42h-4c-.23 0-.45.18-.5.42L8.03 5.09c-.62.27-1.19.62-1.71 1.02l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.64-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.09.75 1.71 1.02l.34 2.59c.05.24.27.42.5.42h4c.23 0 .45-.18.5-.42l.34-2.59c.62-.27 1.19-.62 1.71-1.02l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                    <span class="hidden md:inline">Settings</span>
+                </button></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-grow md:ml-64 pb-20 md:pb-0">
+            <!-- Page content will be rendered here by JS -->
+            <div id="home-page" class="p-6"></div>
+            <div id="profile-page" class="p-6 hidden"></div>
+            <div id="wallet-page" class="p-6 hidden"></div>
+            <div id="notifications-page" class="p-6 hidden"></div>
+            <div id="search-page" class="p-6 hidden"></div>
+            <div id="settings-page" class="p-6 hidden"></div>
+        </main>
+
+        <!-- Message Box -->
+        <div id="message-box" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg hidden z-50 flex items-center justify-between">
+            <span id="message-text"></span>
+            <button id="message-close" class="ml-4 text-white font-bold">&times;</button>
+        </div>
+
+        <!-- Tip Modal -->
+        <div id="tip-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-80">
+                <h3 class="text-xl font-bold mb-4">Tip <span id="tip-username"></span></h3>
+                <p class="mb-4">Enter amount to tip in GOR:</p>
+                <input type="number" id="tip-amount" value="1" min="1" class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-400" />
+                <div class="flex justify-end space-x-3">
+                    <button id="tip-cancel" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors duration-200">Cancel</button>
+                    <button id="tip-confirm" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors duration-200">Tip 1 GOR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Edit Modal -->
+        <div id="profile-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+                <h3 class="text-xl font-bold mb-4">Edit Profile</h3>
+                <div class="mb-4">
+                    <label for="edit-username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+                    <input type="text" id="edit-username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-green-400" />
+                </div>
+                <div class="mb-4">
+                    <label for="edit-bio" class="block text-gray-700 text-sm font-bold mb-2">Bio:</label>
+                    <textarea id="edit-bio" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-green-400 resize-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="edit-profile-cancel" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors duration-200">Cancel</button>
+                    <button id="edit-profile-save" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors duration-200">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript for core logic, Supabase, and Solana -->
+    <script type="module">
+        // Supabase Client CDN
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        // Solana Web3.js CDN
+        import * as solanaWeb3 from 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.2/+esm';
+        import * as splToken from 'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.13/+esm';
+
+        // Reown AppKit CDN for Vanilla JS
+        // This is the correct CDN for plain JS integration.
+        // The `jayson` error might be a transitive dependency issue within ReownAppKit.
+        // If it persists and causes issues, you might need to check Reown's support/issues.
+        import { AppKit, SolanaAdapter, networks } from 'https://cdn.jsdelivr.net/npm/@reown/appkit-cdn/dist/index.umd.js/+esm';
+
+
+        // --- Configuration ---
+        const GORBAGANA_RPC_URL = "https://rpc.gorbagana.wtf";
+        const GOR_TOKEN_MINT_ADDRESS = new solanaWeb3.PublicKey("3DtKNjWYz3nfrp4GSM7Zx5sH5kDCz24PhuzNg");
+
+        // Supabase Configuration
+        const SUPABASE_URL = "https://ehipnuszkzsxghsdtgox.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoaXBudXN6a3pzeGdoc2R0Z294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMDM2MzAsImV4cCI6MjA2Njg3OTYzMH0.z2nxeMEEmWMgnU_YYpWIzVCKXbXn0RFMAP6RDmQkCJQ";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- Global State Variables ---
+        let currentWalletAddress = null;
+        let currentUserProfile = null;
+        let walletData = { gor_balance: 0, tickets_holding: [] };
+        let notifications = [];
+        let allUsers = {};
+        let posts = []; // Cache for posts
+        let currentPage = 'home'; // Default page
+
+        // Reown AppKit Instances
+        let reownAdapter;
+        let reownAppKit;
+        let reownProvider; // The Solana provider from Reown
+
+        // --- Utility Functions ---
+        function showMessage(msg, type = 'success') {
+            const msgBox = document.getElementById('message-box');
+            const msgText = document.getElementById('message-text');
+            msgText.textContent = msg;
+            msgBox.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-lg z-50 flex items-center justify-between animate-fade-in-up ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} text-white`;
+            msgBox.classList.remove('hidden');
+            setTimeout(() => {
+                msgBox.classList.add('hidden');
+            }, 3000);
+        }
+
+        function showLoading(isLoading) {
+            console.log(isLoading ? "Loading..." : "Loading complete.");
+            document.querySelectorAll('button').forEach(btn => {
+                // Only disable buttons that are not the connect wallet button
+                if (btn.id !== 'connect-wallet-button') {
+                    btn.disabled = isLoading;
+                }
+            });
+        }
+
+        // --- Wallet Connection (using Reown AppKit) ---
+        let solanaConnection; // Solana Connection object (from @solana/web3.js)
+
+        async function initReownAppKit() {
+            // Reown Project ID
+            const projectId = '293a2ffcca69577415197a2b8069f321'; // Your provided Project ID
+
+            // Metadata for AppKit - IMPORTANT: url must match your deployed domain
+            const metadata = {
+                name: 'GORTRASHSOCIAL',
+                description: 'Web3 Social App',
+                url: window.location.origin, // Dynamically set to current origin
+                icons: ['https://assets.reown.com/reown-profile-pic.png'] // Replace with your app's icon if available
+            };
+
+            reownAdapter = new SolanaAdapter({
+                projectId: projectId,
+                networks: [networks.solana, networks.solanaTestnet, networks.solanaDevnet],
+            });
+
+            reownAppKit = new AppKit({
+                adapters: [reownAdapter],
+                networks: [networks.solana, networks.solanaTestnet, networks.solanaDevnet],
+                metadata: metadata,
+                projectId: projectId,
+                features: {
+                    analytics: true
+                }
+            });
+
+            solanaConnection = new solanaWeb3.Connection(GORBAGANA_RPC_URL, 'confirmed');
+            console.log("Reown AppKit initialized.");
+        }
+
+        async function connectWallet() {
+            if (!reownAppKit) {
+                showMessage("Reown AppKit not initialized. Please refresh.", "error");
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const session = await reownAppKit.open(); // This opens the Reown modal
+                
+                if (session && session.accounts && session.accounts.length > 0) {
+                    // Reown session.accounts will contain connected public keys
+                    currentWalletAddress = session.accounts[0]; // Get the first connected address
+                    reownProvider = reownAdapter.getProvider(); // Get the Solana provider from the adapter
+
+                    if (!reownProvider || !reownProvider.publicKey) {
+                        throw new Error("Failed to get Reown Solana provider or public key.");
+                    }
+
+                    showMessage(`Wallet connected: ${currentWalletAddress.substring(0, 6)}...${currentWalletAddress.slice(-4)}`);
+                    renderApp(); // Re-render app content after connection
+
+                    // Fetch or create user profile in Supabase
+                    await fetchCurrentUserProfile();
+                    await fetchWalletData();
+                    await fetchNotifications();
+                    await fetchAllUsers(); // Fetch all users for trending/profiles
+                    await fetchPosts(); // Fetch posts after everything is ready
+
+                } else {
+                    showMessage("Wallet connection cancelled or failed.", "error");
+                    currentWalletAddress = null;
+                    renderApp();
+                }
+            } catch (err) {
+                console.error('Failed to connect wallet:', err);
+                showMessage(`Failed to connect wallet: ${err.message || err.toString()}`, "error");
+                currentWalletAddress = null;
+                renderApp();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // --- Supabase Data Management ---
+
+        async function fetchCurrentUserProfile() {
+            if (!supabase || !currentWalletAddress) return;
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('wallet_address', currentWalletAddress)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error("Error fetching current user profile:", error);
+                showMessage("Failed to load your profile.", "error");
+            } else if (data) {
+                currentUserProfile = data;
+            } else {
+                const defaultUsername = `User_${currentWalletAddress.substring(0, 8)}`;
+                const { error: insertError } = await supabase.from('profiles').insert({
+                    wallet_address: currentWalletAddress,
+                    username: defaultUsername,
+                    bio: 'Hello, I am new here!',
+                    followers: [],
+                    following: [],
+                    tickets_earned: 0,
+                    blocked_users: []
+                });
+                if (insertError) {
+                    console.error("Error creating default profile:", insertError);
+                    showMessage("Failed to create default profile.", "error");
+                } else {
+                    currentUserProfile = { wallet_address: currentWalletAddress, username: defaultUsername, bio: 'Hello, I am new here!', followers: [], following: [], tickets_earned: 0, blocked_users: [] };
+                }
+            }
+            renderProfilePage(); // Re-render profile if on that page
+        }
+
+        async function fetchAllUsers() {
+            if (!supabase) return;
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*');
+
+            if (error) {
+                console.error("Error fetching all users:", error);
+            } else {
+                const fetchedUsersMap = {};
+                data.forEach(user => {
+                    fetchedUsersMap[user.wallet_address] = user;
+                });
+                allUsers = fetchedUsersMap;
+            }
+            renderSearchPage(); // Re-render search page for trending users
+        }
+
+        async function fetchWalletData() {
+            if (!supabase || !currentWalletAddress) return;
+            const { data, error } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('wallet_address', currentWalletAddress)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error("Error fetching wallet data:", error);
+                showMessage("Failed to load wallet data.", "error");
+            } else if (data) {
+                walletData = data;
+            } else {
+                const { error: insertError } = await supabase.from('wallets').insert({
+                    wallet_address: currentWalletAddress,
+                    gor_balance: 0,
+                    tickets_holding: []
+                });
+                if (insertError) {
+                    console.error("Error creating default wallet:", insertError);
+                    showMessage("Failed to create default wallet.", "error");
+                } else {
+                    walletData = { wallet_address: currentWalletAddress, gor_balance: 0, tickets_holding: [] };
+                }
+            }
+            renderWalletPage(); // Re-render wallet page
+        }
+
+        async function fetchNotifications() {
+            if (!supabase || !currentWalletAddress) return;
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('*')
+                .eq('recipient_address', currentWalletAddress)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching notifications:", error);
+                showMessage("Failed to load notifications.", "error");
+            } else {
+                notifications = data;
+                updateNotificationBadge();
+            }
+            renderNotificationsPage(); // Re-render notifications page
+        }
+
+        async function fetchPosts() {
+            if (!supabase) return;
+            const { data, error } = await supabase
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching posts:", error);
+                showMessage("Failed to load posts.", "error");
+            } else {
+                posts = data;
+            }
+            renderHomePage(); // Re-render home page
+        }
+
+        // --- Supabase Realtime Subscriptions ---
+        function setupSupabaseRealtime() {
+            if (!supabase) return;
+
+            supabase
+                .from('posts')
+                .on('*', payload => { fetchPosts(); })
+                .subscribe();
+
+            supabase
+                .from('profiles')
+                .on('*', payload => { fetchAllUsers(); fetchCurrentUserProfile(); })
+                .subscribe();
+
+            if (currentWalletAddress) {
+                supabase
+                    .from('wallets')
+                    .on('*', payload => { fetchWalletData(); })
+                    .eq('wallet_address', currentWalletAddress)
+                    .subscribe();
+
+                supabase
+                    .from('notifications')
+                    .on('*', payload => { fetchNotifications(); })
+                    .eq('recipient_address', currentWalletAddress)
+                    .subscribe();
+            }
+        }
+
+        // --- Actions ---
+
+        async function uploadImage(file) {
+            if (!file) return null;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `post_images/${currentWalletAddress}/${fileName}`;
+
+            const { data, error } = await supabase.storage.from('web3-social-bucket').upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+            if (error) {
+                console.error("Error uploading image:", error);
+                showMessage(`Image upload failed: ${error.message}`, "error");
+                return null;
+            }
+
+            const { data: publicUrlData } = supabase.storage.from('web3-social-bucket').getPublicUrl(filePath);
+            
+            if (publicUrlData && publicUrlData.publicUrl) {
+                return publicUrlData.publicUrl;
+            } else {
+                console.error("Error getting public URL from Supabase storage:", publicUrlData);
+                showMessage("Failed to get public URL for image.", "error");
+                return null;
+            }
+        }
+
+        async function handlePost() {
+            const postContent = document.getElementById('new-post-content').value.trim();
+            const postImageInput = document.getElementById('new-post-image');
+            const newPostImage = postImageInput.files[0];
+
+            if (!postContent && !newPostImage) {
+                showMessage("Post content or image cannot be empty.", "error");
+                return;
+            }
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+
+            showLoading(true);
+            let imageUrl = null;
+            if (newPostImage) {
+                showMessage("Uploading image...", "info");
+                imageUrl = await uploadImage(newPostImage);
+                if (!imageUrl) {
+                    showLoading(false);
+                    return;
+                }
+            }
+
+            try {
+                const { error } = await supabase.from('posts').insert({
+                    author_address: currentWalletAddress,
+                    username: currentUserProfile.username || `User_${currentWalletAddress.substring(0, 8)}`,
+                    content: postContent,
+                    image_url: imageUrl,
+                    likes: [],
+                    reposts: [],
+                    likes_count: 0,
+                    reposts_count: 0,
+                    comments_count: 0
+                });
+
+                if (error) {
+                    console.error("Error adding post:", error);
+                    showMessage("Failed to create post.", "error");
+                } else {
+                    document.getElementById('new-post-content').value = '';
+                    postImageInput.value = ''; // Clear file input
+                    showMessage("Post created successfully!");
+                }
+            } catch (error) {
+                console.error("Error adding post:", error);
+                showMessage("Failed to create post.", "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleLike(postId, isCurrentlyLiked) {
+            if (!supabase || !currentWalletAddress) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                const { data: postData, error: fetchError } = await supabase
+                    .from('posts')
+                    .select('likes, likes_count')
+                    .eq('id', postId)
+                    .single();
+
+                if (fetchError) {
+                    throw fetchError;
+                }
+
+                let updatedLikes = postData.likes || [];
+                let newLikesCount = postData.likes_count || 0;
+
+                if (isCurrentlyLiked) {
+                    updatedLikes = updatedLikes.filter(addr => addr !== currentWalletAddress);
+                    newLikesCount = Math.max(0, newLikesCount - 1);
+                } else {
+                    updatedLikes.push(currentWalletAddress);
+                    newLikesCount++;
+                }
+
+                const { error: updateError } = await supabase
+                    .from('posts')
+                    .update({ likes: updatedLikes, likes_count: newLikesCount })
+                    .eq('id', postId);
+
+                if (updateError) {
+                    throw updateError;
+                }
+                showMessage(isCurrentlyLiked ? "Post unliked!" : "Post liked!");
+            } catch (error) {
+                console.error("Error liking post:", error);
+                showMessage(`Failed to like/unlike post: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleComment(postId, commentContent) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                const { data: postData, error: fetchError } = await supabase
+                    .from('posts')
+                    .select('author_address, comments_count')
+                    .eq('id', postId)
+                    .single();
+
+                if (fetchError) {
+                    throw fetchError;
+                }
+
+                const { error: commentInsertError } = await supabase.from('comments').insert({
+                    post_id: postId,
+                    author_address: currentWalletAddress,
+                    username: currentUserProfile.username || `User_${currentWalletAddress.substring(0, 8)}`,
+                    content: commentContent
+                });
+
+                if (commentInsertError) {
+                    throw commentInsertError;
+                }
+
+                const newCommentsCount = (postData.comments_count || 0) + 1;
+                await supabase.from('posts').update({ comments_count: newCommentsCount }).eq('id', postId);
+
+                showMessage("Comment added!");
+                if (postData.author_address !== currentWalletAddress) {
+                    await supabase.from('notifications').insert({
+                        recipient_address: postData.author_address,
+                        type: 'comment',
+                        message: `${currentUserProfile.username || 'Someone'} commented on your post: "${commentContent.substring(0, 30)}..."`,
+                        post_id: postId,
+                        sender_address: currentWalletAddress,
+                        read: false
+                    });
+                }
+            } catch (error) {
+                console.error("Error commenting on post:", error);
+                showMessage(`Failed to add comment: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleRepost(postId) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                const { data: postData, error: fetchError } = await supabase
+                    .from('posts')
+                    .select('author_address, reposts, reposts_count')
+                    .eq('id', postId)
+                    .single();
+
+                if (fetchError) {
+                    throw fetchError;
+                }
+
+                let updatedReposts = postData.reposts || [];
+                let newRepostsCount = postData.reposts_count || 0;
+
+                if (!updatedReposts.includes(currentWalletAddress)) {
+                    updatedReposts.push(currentWalletAddress);
+                    newRepostsCount++;
+
+                    const { error: updateError } = await supabase
+                        .from('posts')
+                        .update({ reposts: updatedReposts, reposts_count: newRepostsCount })
+                        .eq('id', postId);
+
+                    if (updateError) {
+                        throw updateError;
+                    }
+
+                    showMessage("Post reposted!");
+                    if (postData.author_address !== currentWalletAddress) {
+                        await supabase.from('notifications').insert({
+                            recipient_address: postData.author_address,
+                            type: 'repost',
+                            message: `${currentUserProfile.username || 'Someone'} reposted your post!`,
+                            post_id: postId,
+                            sender_address: currentWalletAddress,
+                            read: false
+                        });
+                    }
+                } else {
+                    showMessage("You've already reposted this.", "error");
+                }
+            } catch (error) {
+                console.error("Error reposting post:", error);
+                showMessage(`Failed to repost post: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleProfileClick(profileAddress) {
+            if (!supabase) return;
+            const userProfile = allUsers[profileAddress];
+            if (userProfile) {
+                renderProfilePage(userProfile);
+                currentPage = 'profile';
+                updateActiveNavButton();
+            } else {
+                showMessage("User profile not found.", "error");
+            }
+        }
+
+        async function handleFollowToggle(targetAddress, isFollowing) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            if (currentWalletAddress === targetAddress) {
+                showMessage("You cannot follow/unfollow yourself.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                let currentUserFollowing = currentUserProfile.following || [];
+                if (isFollowing) {
+                    currentUserFollowing = currentUserFollowing.filter(addr => addr !== targetAddress);
+                } else {
+                    currentUserFollowing.push(targetAddress);
+                }
+                const { error: currentUserUpdateError } = await supabase
+                    .from('profiles')
+                    .update({ following: currentUserFollowing })
+                    .eq('wallet_address', currentWalletAddress);
+
+                if (currentUserUpdateError) throw currentUserUpdateError;
+
+                const { data: targetUserProfile, error: targetFetchError } = await supabase
+                    .from('profiles')
+                    .select('followers')
+                    .eq('wallet_address', targetAddress)
+                    .single();
+
+                if (targetFetchError) throw targetFetchError;
+
+                let targetUserFollowers = targetUserProfile.followers || [];
+                if (isFollowing) {
+                    targetUserFollowers = targetUserFollowers.filter(addr => addr !== currentWalletAddress);
+                } else {
+                    targetUserFollowers.push(currentWalletAddress);
+                }
+                const { error: targetUserUpdateError } = await supabase
+                    .from('profiles')
+                    .update({ followers: targetUserFollowers })
+                    .eq('wallet_address', targetAddress);
+
+                if (targetUserUpdateError) throw targetUserUpdateError;
+
+                showMessage(isFollowing ? "Unfollowed user." : "Followed user!");
+
+                if (!isFollowing && targetAddress !== currentWalletAddress) {
+                    await supabase.from('notifications').insert({
+                        recipient_address: targetAddress,
+                        type: 'follow',
+                        message: `${currentUserProfile.username || 'Someone'} started following you!`,
+                        sender_address: currentWalletAddress,
+                        read: false
+                    });
+                }
+            } catch (error) {
+                console.error("Error follow/unfollow:", error);
+                showMessage(`Failed to follow/unfollow: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleBlock(targetAddress) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            if (currentWalletAddress === targetAddress) {
+                showMessage("You cannot block yourself.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                let updatedBlocked = currentUserProfile.blocked_users || [];
+                if (!updatedBlocked.includes(targetAddress)) {
+                    updatedBlocked.push(targetAddress);
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({ blocked_users: updatedBlocked })
+                        .eq('wallet_address', currentWalletAddress);
+
+                    if (error) throw error;
+                    showMessage("User blocked successfully.");
+                } else {
+                    showMessage("User is already blocked.", "error");
+                }
+            } catch (error) {
+                console.error("Error blocking user:", error);
+                showMessage(`Failed to block user: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleBuyTicket(targetAddress) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            if (currentWalletAddress === targetAddress) {
+                showMessage("You cannot buy a ticket for yourself.", "error");
+                return;
+            }
+            if (walletData.gor_balance < 1) {
+                showMessage("Insufficient GOR balance to buy a ticket. Please fund your wallet.", "error");
+                return;
+            }
+
+            showLoading(true);
+            try {
+                showMessage("Initiating ticket purchase transaction...", "info");
+
+                const buyerTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, reownProvider.publicKey);
+                const receiverTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, new solanaWeb3.PublicKey(targetAddress));
+
+                const transaction = new solanaWeb3.Transaction().add(
+                    splToken.createTransferInstruction(
+                        buyerTokenAccount,
+                        receiverTokenAccount,
+                        reownProvider.publicKey,
+                        1, // amount (1 GOR)
+                        [],
+                        splToken.TOKEN_PROGRAM_ID
+                    )
+                );
+
+                const { blockhash } = await solanaConnection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = reownProvider.publicKey;
+
+                // Use reownProvider.sendTransaction
+                const signature = await reownProvider.sendTransaction(transaction, solanaConnection);
+                await solanaConnection.confirmTransaction(signature, 'processed');
+
+                showMessage("Ticket purchase transaction confirmed on-chain!", "success");
+
+                // --- Update Supabase AFTER successful on-chain transaction ---
+                let updatedTicketsHolding = [...walletData.tickets_holding];
+                const existingTicketIndex = updatedTicketsHolding.findIndex(ticket => ticket.wallet_address === targetAddress);
+
+                if (existingTicketIndex > -1) {
+                    updatedTicketsHolding[existingTicketIndex] = {
+                        ...updatedTicketsHolding[existingTicketIndex],
+                        count: updatedTicketsHolding[existingTicketIndex].count + 1
+                    };
+                } else {
+                    const { data: targetProfile, error: targetProfileError } = await supabase
+                        .from('profiles')
+                        .select('username')
+                        .eq('wallet_address', targetAddress)
+                        .single();
+
+                    if (targetProfileError) throw targetProfileError;
+
+                    updatedTicketsHolding.push({ wallet_address: targetAddress, count: 1, username: targetProfile.username });
+                }
+
+                const { error: walletUpdateError } = await supabase
+                    .from('wallets')
+                    .update({
+                        gor_balance: walletData.gor_balance - 1,
+                        tickets_holding: updatedTicketsHolding
+                    })
+                    .eq('wallet_address', currentWalletAddress);
+
+                if (walletUpdateError) throw walletUpdateError;
+
+                const { data: targetUser, error: targetUserError } = await supabase
+                    .from('profiles')
+                    .select('tickets_earned')
+                    .eq('wallet_address', targetAddress)
+                    .single();
+
+                if (targetUserError) throw targetUserError;
+
+                const { error: profileUpdateError } = await supabase
+                    .from('profiles')
+                    .update({ tickets_earned: (targetUser.tickets_earned || 0) + 1 })
+                    .eq('wallet_address', targetAddress);
+
+                if (profileUpdateError) throw profileUpdateError;
+
+                showMessage("Ticket purchase successful and Supabase updated!", "success");
+                await supabase.from('notifications').insert({
+                    recipient_address: targetAddress,
+                    type: 'ticket_buy',
+                    message: `${currentUserProfile.username || 'Someone'} bought a ticket for you!`,
+                    sender_address: currentWalletAddress,
+                    read: false
+                });
+            } catch (error) {
+                console.error("Error buying ticket:", error);
+                showMessage(`Failed to buy ticket: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleSellTicket(targetAddress) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+
+            try {
+                const existingTicketIndex = walletData.tickets_holding.findIndex(ticket => ticket.wallet_address === targetAddress);
+                if (existingTicketIndex === -1 || walletData.tickets_holding[existingTicketIndex].count === 0) {
+                    showMessage("You don't hold any tickets for this user.", "error");
+                    return;
+                }
+                showLoading(true);
+                showMessage("Initiating ticket sale transaction...", "info");
+
+                // --- Simulate on-chain transaction for selling ticket ---
+                // For this HTML version, we'll proceed with Supabase update after a simulated "transaction".
+                // You could add a dummy transaction here if desired, e.g.:
+                // const transaction = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({ fromPubkey: reownProvider.publicKey, toPubkey: reownProvider.publicKey, lamports: 1 }));
+                // const { blockhash } = await solanaConnection.getLatestBlockhash();
+                // transaction.recentBlockhash = blockhash;
+                // transaction.feePayer = reownProvider.publicKey;
+                // const signature = await reownProvider.sendTransaction(transaction, solanaConnection);
+                // await solanaConnection.confirmTransaction(signature, 'processed');
+                // showMessage("Simulated ticket sale transaction confirmed on-chain!", "success");
+
+
+                // --- Update Supabase AFTER successful (simulated) on-chain transaction ---
+                let updatedTicketsHolding = [...walletData.tickets_holding];
+                updatedTicketsHolding[existingTicketIndex].count -= 1;
+
+                if (updatedTicketsHolding[existingTicketIndex].count === 0) {
+                    updatedTicketsHolding.splice(existingTicketIndex, 1);
+                }
+
+                const { error: walletUpdateError } = await supabase
+                    .from('wallets')
+                    .update({
+                        gor_balance: walletData.gor_balance + 1, // Get 1 GOR back
+                        tickets_holding: updatedTicketsHolding
+                    })
+                    .eq('wallet_address', currentWalletAddress);
+
+                if (walletUpdateError) throw walletUpdateError;
+
+                const { data: targetUser, error: targetUserError } = await supabase
+                    .from('profiles')
+                    .select('tickets_earned')
+                    .eq('wallet_address', targetAddress)
+                    .single();
+
+                if (targetUserError) throw targetUserError;
+
+                const { error: profileUpdateError } = await supabase
+                    .from('profiles')
+                    .update({ tickets_earned: Math.max(0, (targetUser.tickets_earned || 0) - 1) })
+                    .eq('wallet_address', targetAddress);
+
+                if (profileUpdateError) throw profileUpdateError;
+
+                showMessage("Ticket sold successfully! 1 GOR received.", "success");
+            } catch (error) {
+                console.error("Error selling ticket:", error);
+                showMessage(`Failed to sell ticket: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+
+        async function handleTip(targetAddress, amount) {
+            if (!supabase || !currentWalletAddress || !currentUserProfile || !solanaConnection || !reownProvider || !reownProvider.publicKey) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            if (currentWalletAddress === targetAddress) {
+                showMessage("You cannot tip yourself.", "error");
+                return;
+            }
+            if (walletData.gor_balance < amount) {
+                showMessage("Insufficient GOR balance to tip. Please fund your wallet.", "error");
+                return;
+            }
+            if (amount <= 0) {
+                showMessage("Tip amount must be positive.", "error");
+                return;
+            }
+
+            showLoading(true);
+            try {
+                showMessage(`Initiating tip of ${amount} GOR to ${targetAddress.substring(0, 7)}...`, "info");
+
+                const senderTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, reownProvider.publicKey);
+                const receiverTokenAccount = await splToken.getAssociatedTokenAddress(GOR_TOKEN_MINT_ADDRESS, new solanaWeb3.PublicKey(targetAddress));
+
+                const transaction = new solanaWeb3.Transaction().add(
+                    splToken.createTransferInstruction(
+                        senderTokenAccount,
+                        receiverTokenAccount,
+                        reownProvider.publicKey,
+                        amount,
+                        [],
+                        splToken.TOKEN_PROGRAM_ID
+                    )
+                );
+
+                const { blockhash } = await solanaConnection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = reownProvider.publicKey;
+
+                const signature = await reownProvider.sendTransaction(transaction, solanaConnection);
+                await solanaConnection.confirmTransaction(signature, 'processed');
+
+                showMessage("Tip transaction confirmed on-chain!", "success");
+
+                // --- Update Supabase AFTER successful on-chain transaction ---
+                const { error: senderUpdateError } = await supabase
+                    .from('wallets')
+                    .update({ gor_balance: walletData.gor_balance - amount })
+                    .eq('wallet_address', currentWalletAddress);
+
+                if (senderUpdateError) throw senderUpdateError;
+
+                const { data: receiverWallet, error: receiverFetchError } = await supabase
+                    .from('wallets')
+                    .select('gor_balance')
+                    .eq('wallet_address', targetAddress)
+                    .single();
+
+                if (receiverFetchError && receiverFetchError.code !== 'PGRST116') {
+                    throw receiverFetchError;
+                }
+
+                let receiverCurrentBalance = receiverWallet ? receiverWallet.gor_balance : 0;
+
+                const { error: receiverUpdateError } = await supabase
+                    .from('wallets')
+                    .upsert({ wallet_address: targetAddress, gor_balance: receiverCurrentBalance + amount }, { onConflict: 'wallet_address' });
+
+                if (receiverUpdateError) throw receiverUpdateError;
+
+                showMessage(`Tipped ${amount} GOR to user successfully and Supabase updated!`, "success");
+                await supabase.from('notifications').insert({
+                    recipient_address: targetAddress,
+                    type: 'tip',
+                    message: `${currentUserProfile.username || 'Someone'} tipped you ${amount} GOR!`,
+                    sender_address: currentWalletAddress,
+                    read: false
+                });
+            } catch (error) {
+                console.error("Error tipping user:", error);
+                showMessage(`Failed to tip: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleMarkNotificationRead(notificationId) {
+            if (!supabase || !currentWalletAddress) return;
+            showLoading(true);
+            try {
+                const { error } = await supabase
+                    .from('notifications')
+                    .update({ read: true })
+                    .eq('id', notificationId)
+                    .eq('recipient_address', currentWalletAddress);
+
+                if (error) throw error;
+                showMessage("Notification marked as read.", "success");
+            } catch (error) {
+                console.error("Error marking notification read:", error);
+                showMessage(`Failed to mark notification read: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleSaveProfile() {
+            if (!supabase || !currentWalletAddress) {
+                showMessage("Please connect your wallet first.", "error");
+                return;
+            }
+            const username = document.getElementById('edit-username').value.trim();
+            const bio = document.getElementById('edit-bio').value.trim();
+
+            if (!username) {
+                showMessage("Username cannot be empty.", "error");
+                return;
+            }
+            showLoading(true);
+            try {
+                const { error: profileUpdateError } = await supabase
+                    .from('profiles')
+                    .update({
+                        username: username,
+                        bio: bio
+                    })
+                    .eq('wallet_address', currentWalletAddress);
+
+                if (profileUpdateError) throw profileUpdateError;
+
+                // Update username in existing posts by this user (denormalized data)
+                const { error: postsUpdateError } = await supabase
+                    .from('posts')
+                    .update({ username: username })
+                    .eq('author_address', currentWalletAddress);
+
+                if (postsUpdateError) console.error("Error updating username in posts:", postsUpdateError);
+
+                // Update username in existing comments by this user (denormalized data)
+                const { error: commentsUpdateError } = await supabase
+                    .from('comments')
+                    .update({ username: username })
+                    .eq('author_address', currentWalletAddress);
+
+                if (commentsUpdateError) console.error("Error updating username in comments:", commentsUpdateError);
+
+                showMessage("Profile updated successfully!");
+                document.getElementById('profile-edit-modal').classList.add('hidden');
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                showMessage(`Failed to update profile: ${error.message || error.toString()}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function handleSearch() {
+            // Re-render search page with current searchTerm
+            renderSearchPage();
+        }
+
+        function getTrendingUsers() {
+            const usersArray = Object.values(allUsers);
+            const otherUsers = usersArray.filter(user => user.wallet_address !== currentWalletAddress);
+
+            return otherUsers
+                .map(user => ({
+                    ...user,
+                    trendingScore: (user.tickets_earned || 0) + (user.followers?.length || 0)
+                }))
+                .sort((a, b) => b.trendingScore - a.trendingScore)
+                .slice(0, 5);
+        }
+
+        // --- Render Functions for Pages ---
+        function hideAllPages() {
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('profile-page').classList.add('hidden');
+            document.getElementById('wallet-page').classList.add('hidden');
+            document.getElementById('notifications-page').classList.add('hidden');
+            document.getElementById('search-page').classList.add('hidden');
+            document.getElementById('settings-page').classList.add('hidden');
+        }
+
+        function updateActiveNavButton() {
+            document.querySelectorAll('#nav-links button').forEach(btn => {
+                btn.classList.remove('bg-green-100', 'text-green-700', 'font-semibold');
+                btn.classList.add('text-gray-700', 'hover:bg-gray-100');
+            });
+            const activeBtn = document.getElementById(`${currentPage}-nav`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-green-100', 'text-green-700', 'font-semibold');
+                activeBtn.classList.remove('text-gray-700', 'hover:bg-gray-100');
+            }
+        }
+
+        function renderApp() {
+            hideAllPages();
+            updateActiveNavButton();
+
+            // Render specific page content
+            switch (currentPage) {
+                case 'home':
+                    renderHomePage();
+                    document.getElementById('home-page').classList.remove('hidden');
+                    break;
+                case 'profile':
+                    renderProfilePage(allUsers[profileViewAddress] || currentUserProfile);
+                    document.getElementById('profile-page').classList.remove('hidden');
+                    break;
+                case 'wallet':
+                    renderWalletPage();
+                    document.getElementById('wallet-page').classList.remove('hidden');
+                    break;
+                case 'notifications':
+                    renderNotificationsPage();
+                    document.getElementById('notifications-page').classList.remove('hidden');
+                    break;
+                case 'search':
+                    renderSearchPage();
+                    document.getElementById('search-page').classList.remove('hidden');
+                    break;
+                case 'settings':
+                    renderSettingsPage();
+                    document.getElementById('settings-page').classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function renderHomePage() {
+            const homePage = document.getElementById('home-page');
+            const connectedStateHtml = `
+                <div class="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <textarea id="new-post-content" class="w-full p-3 border border-gray-300 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none" rows="3" placeholder="What's happening?"></textarea>
+                    <input type="file" id="new-post-image" accept="image/*" class="mb-3 p-2 border border-gray-300 rounded-md w-full" />
+                    <p id="selected-image-name" class="text-sm text-gray-500 mb-2 hidden"></p>
+                    <button id="post-button" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-all duration-300 transform hover:scale-105">Post</button>
+                </div>
+                <div id="posts-feed"></div>
+            `;
+            const disconnectedStateHtml = `
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg shadow-md" role="alert">
+                    <p class="font-bold">Connect Your Wallet!</p>
+                    <p>To post, like, comment, and interact fully, please connect your Web3 wallet (e.g., Backpack, Phantom).</p>
+                    <div class="mt-3">
+                        <button id="connect-wallet-button" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors duration-200">Connect Wallet</button>
+                    </div>
+                </div>
+                <div id="posts-feed"></div>
+            `;
+
+            homePage.innerHTML = currentWalletAddress ? connectedStateHtml : disconnectedStateHtml;
+
+            // Attach event listeners after rendering HTML
+            if (currentWalletAddress) {
+                document.getElementById('post-button').onclick = handlePost;
+                const newPostImageInput = document.getElementById('new-post-image');
+                const selectedImageName = document.getElementById('selected-image-name');
+                newPostImageInput.onchange = (e) => {
+                    if (e.target.files[0]) {
+                        selectedImageName.textContent = `Selected: ${e.target.files[0].name}`;
+                        selectedImageName.classList.remove('hidden');
+                    } else {
+                        selectedImageName.classList.add('hidden');
+                    }
+                };
+            } else {
+                document.getElementById('connect-wallet-button').onclick = connectWallet;
+            }
+
+            renderPostsFeed(); // Render posts regardless of connection
+        }
+
+        async function renderPostsFeed() {
+            const postsFeed = document.getElementById('posts-feed');
+            postsFeed.innerHTML = '<p class="text-gray-400">Loading posts...</p>';
+
+            if (posts.length === 0) {
+                postsFeed.innerHTML = '<p class="text-gray-400">No posts yet. Be the first to post!</p>';
+                return;
+            }
+
+            let postsHtml = '';
+            for (const post of posts) {
+                const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
+                const isLiked = post.likes && post.likes.includes(currentWalletAddress);
+                const likeButtonClass = isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400';
+                const isAuthor = post.author_address === currentWalletAddress;
+
+                // Fetch comments for this post
+                const { data: commentsData, error: commentsError } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .eq('post_id', post.id)
+                    .order('created_at', { ascending: true });
+
+                let commentsHtml = '';
+                if (commentsError) {
+                    console.error("Error fetching comments:", commentsError);
+                    commentsHtml = '<p class="text-red-400">Error loading comments.</p>';
+                } else if (commentsData && commentsData.length > 0) {
+                    for (const comment of commentsData) {
+                        const commentAuthorName = allUsers[comment.author_address]?.username || comment.username || comment.author_address.substring(0, 6) + '...' + comment.author_address.slice(-4);
+                        commentsHtml += `
+                            <div class="bg-gray-50 p-3 rounded-lg mb-2 text-sm border border-gray-100">
+                                <p class="font-semibold text-gray-800">${commentAuthorName}</p>
+                                <p class="text-gray-700">${comment.content}</p>
+                                <p class="text-xs text-gray-500">${new Date(comment.created_at).toLocaleString()}</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    commentsHtml = '<p class="text-gray-500 text-sm">No comments yet. Be the first!</p>';
+                }
+
+                postsHtml += `
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
+                        ${post.reposts && post.reposts.includes(currentWalletAddress) ? `<p class="text-sm text-gray-500 mb-2"><span class="text-green-600 font-semibold">You </span>reposted this</p>` : ''}
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-lg mr-3 cursor-pointer" data-wallet-address="${post.author_address}">
+                                ${authorName[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800 cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
+                                <p class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4">${post.content}</p>
+                        ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
+                        <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-2">
+                            <button class="flex items-center space-x-1 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <span>${post.likes_count || 0}</span>
+                            </button>
+                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                <span>${post.comments_count || 0}</span>
+                            </button>
+                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                <span>${post.reposts_count || 0}</span>
+                            </button>
+                            ${!isAuthor && currentWalletAddress ? `
+                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <span>Tip</span>
+                            </button>
+                            ` : ''}
+                        </div>
+                        <div id="comments-section-${post.id}" class="comments-section mt-4 pt-3 border-t border-gray-200 hidden">
+                            <h4 class="font-semibold mb-2 text-gray-700">Comments</h4>
+                            <div id="comments-list-${post.id}" class="space-y-2 text-sm">
+                                ${commentsHtml}
+                            </div>
+                            <div class="flex mt-3">
+                                <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <button class="post-comment-button bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600 transition-colors duration-200" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            postsFeed.innerHTML = postsHtml;
+
+            // Attach event listeners for dynamically created elements
+            postsFeed.querySelectorAll('.like-button').forEach(button => {
+                button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
+            });
+            postsFeed.querySelectorAll('.comment-toggle-button').forEach(button => {
+                button.onclick = () => {
+                    const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
+                    commentsSection.classList.toggle('hidden');
+                };
+            });
+            postsFeed.querySelectorAll('.repost-button').forEach(button => {
+                button.onclick = () => handleRepost(button.dataset.postId);
+            });
+            postsFeed.querySelectorAll('.tip-button').forEach(button => {
+                button.onclick = () => {
+                    document.getElementById('tip-username').textContent = button.dataset.authorUsername;
+                    document.getElementById('tip-confirm').onclick = () => handleTip(button.dataset.authorAddress, parseInt(document.getElementById('tip-amount').value));
+                    document.getElementById('tip-modal').classList.remove('hidden');
+                };
+            });
+            postsFeed.querySelectorAll('.post-comment-button').forEach(button => {
+                button.onclick = async () => {
+                    const postId = button.dataset.postId;
+                    const commentInput = button.previousElementSibling; // The input field
+                    const commentContent = commentInput.value.trim();
+                    if (commentContent) {
+                        await handleComment(postId, commentContent);
+                        commentInput.value = ''; // Clear input
+                    } else {
+                        showMessage("Comment cannot be empty.", "error");
+                    }
+                };
+            });
+            postsFeed.querySelectorAll('[data-wallet-address]').forEach(element => {
+                element.onclick = () => handleProfileClick(element.dataset.walletAddress);
+            });
+        }
+
+
+        function renderProfilePage(userProfile) {
+            const profilePage = document.getElementById('profile-page');
+            if (!userProfile) {
+                profilePage.innerHTML = '<p class="text-center text-gray-500">Profile not found or loading...</p>';
+                return;
+            }
+
+            const isCurrentUserProfile = userProfile.wallet_address === currentWalletAddress;
+            const isFollowing = currentUserProfile?.following?.includes(userProfile.wallet_address);
+
+            const userPosts = posts.filter(post => post.author_address === userProfile.wallet_address);
+            const userReposts = posts.filter(post => post.reposts?.includes(userProfile.wallet_address));
+
+            const contentToDisplay = profileActiveTab === 'posts' ? userPosts : userReposts;
+            contentToDisplay.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            profilePage.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <div class="flex flex-col md:flex-row items-center md:items-start mb-4">
+                        <div class="w-28 h-28 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-5xl mr-0 md:mr-6 mb-4 md:mb-0 border-4 border-green-400 flex-shrink-0">
+                            ${userProfile.username ? userProfile.username[0].toUpperCase() : 'U'}
+                        </div>
+                        <div class="text-center md:text-left flex-grow">
+                            <h2 class="text-3xl font-bold text-gray-800 mb-1">${userProfile.username || 'Anonymous'}</h2>
+                            <p class="text-gray-600 text-md mb-3">${userProfile.bio || 'No bio yet.'}</p>
+                            <p class="text-sm text-gray-500 mb-4">Wallet Address: <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded inline-block">${userProfile.wallet_address?.substring(0, 7)}...${userProfile.wallet_address?.slice(-4)}</span></p>
+
+                            <div class="flex flex-wrap justify-center md:justify-start space-x-6 text-lg mb-4">
+                                <p class="text-gray-700">Followers: <span class="font-semibold text-green-600">${userProfile.followers?.length || 0}</span></p>
+                                <p class="text-gray-700">Following: <span class="font-semibold text-blue-600">${userProfile.following?.length || 0}</span></p>
+                                <p class="text-gray-700">Tickets: <span class="font-semibold text-purple-600">${userProfile.tickets_earned || 0}</span></p>
+                            </div>
+
+                            <div class="flex flex-wrap justify-center md:justify-start space-x-3 mt-4 gap-2">
+                                ${isCurrentUserProfile ? `
+                                    <button id="edit-profile-button" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors duration-200 shadow-md">
+                                        Edit Profile
+                                    </button>
+                                ` : `
+                                    <button id="follow-toggle-button" class="py-2 px-4 rounded-md transition-colors duration-200 shadow-md ${isFollowing ? 'bg-gray-300 text-gray-800 hover:bg-gray-400' : 'bg-green-500 text-white hover:bg-green-600'}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        ${isFollowing ? 'Unfollow' : 'Follow'}
+                                    </button>
+                                    <button id="block-user-button" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors duration-200 shadow-md" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        Block
+                                    </button>
+                                    <button id="buy-ticket-button" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-200 shadow-md" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        Buy Ticket (1 GOR)
+                                    </button>
+                                    <button id="tip-user-profile-button" class="bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition-colors duration-200 shadow-md" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        Tip 10 GOR
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <div class="flex border-b border-gray-200 mb-4">
+                        <button id="posts-tab-button" class="flex-1 py-3 text-lg font-semibold transition-colors duration-200 ${profileActiveTab === 'posts' ? 'text-green-700 border-b-2 border-green-700' : 'text-gray-500 hover:text-gray-700'}">
+                            Posts (${userPosts.length})
+                        </button>
+                        <button id="reposts-tab-button" class="flex-1 py-3 text-lg font-semibold transition-colors duration-200 ${profileActiveTab === 'reposts' ? 'text-green-700 border-b-2 border-green-700' : 'text-gray-500 hover:text-gray-700'}">
+                            Reposts (${userReposts.length})
+                        </button>
+                    </div>
+                    <div id="profile-posts-feed"></div>
+                </div>
+            `;
+
+            // Attach event listeners for profile actions
+            if (isCurrentUserProfile) {
+                document.getElementById('edit-profile-button').onclick = () => {
+                    document.getElementById('edit-username').value = currentUserProfile.username || '';
+                    document.getElementById('edit-bio').value = currentUserProfile.bio || '';
+                    document.getElementById('profile-edit-modal').classList.remove('hidden');
+                };
+            } else {
+                const followBtn = document.getElementById('follow-toggle-button');
+                if (followBtn) followBtn.onclick = () => handleFollowToggle(userProfile.wallet_address, isFollowing);
+                const blockBtn = document.getElementById('block-user-button');
+                if (blockBtn) blockBtn.onclick = () => handleBlock(userProfile.wallet_address);
+                const buyTicketBtn = document.getElementById('buy-ticket-button');
+                if (buyTicketBtn) buyTicketBtn.onclick = () => handleBuyTicket(userProfile.wallet_address);
+                const tipProfileBtn = document.getElementById('tip-user-profile-button');
+                if (tipProfileBtn) tipProfileBtn.onclick = () => {
+                    document.getElementById('tip-username').textContent = userProfile.username;
+                    document.getElementById('tip-confirm').onclick = () => handleTip(userProfile.wallet_address, 10); // Default tip 10 GOR
+                    document.getElementById('tip-modal').classList.remove('hidden');
+                };
+            }
+
+            document.getElementById('posts-tab-button').onclick = () => { profileActiveTab = 'posts'; renderProfilePage(userProfile); };
+            document.getElementById('reposts-tab-button').onclick = () => { profileActiveTab = 'reposts'; renderProfilePage(userProfile); };
+
+            renderProfilePostsFeed(contentToDisplay, isCurrentUserProfile);
+        }
+
+        function renderProfilePostsFeed(content, isCurrentUserProfile) {
+            const profilePostsFeed = document.getElementById('profile-posts-feed');
+            profilePostsFeed.innerHTML = ''; // Clear existing content
+
+            if (content.length === 0) {
+                profilePostsFeed.innerHTML = `<p class="text-center text-gray-500 py-4">${profileActiveTab === 'posts' ? 'No posts yet.' : 'No reposts yet.'}</p>`;
+                return;
+            }
+
+            let postsHtml = '';
+            for (const post of content) {
+                const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
+                const isLiked = post.likes && post.likes.includes(currentWalletAddress);
+                const likeButtonClass = isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400';
+                const postIsAuthor = post.author_address === currentWalletAddress; // Check if the post's author is the current user
+
+                // Fetch comments for this post
+                // NOTE: In vanilla JS, fetching comments for EACH post on profile render can be heavy.
+                // For a true scale, you'd load comments on demand (e.g., when "show comments" is clicked).
+                // For this demo, we'll simulate.
+                let commentsHtml = '<p class="text-gray-500 text-sm">Comments load on demand...</p>'; // Simplified for performance
+
+                postsHtml += `
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
+                        ${post.reposts && post.reposts.includes(currentWalletAddress) && isCurrentUserProfile ? `<p class="text-sm text-gray-500 mb-2"><span class="text-green-600 font-semibold">You </span>reposted this</p>` : ''}
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-lg mr-3 cursor-pointer" data-wallet-address="${post.author_address}">
+                                ${authorName[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800 cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
+                                <p class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4">${post.content}</p>
+                        ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
+                        <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-2">
+                            <button class="flex items-center space-x-1 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <span>${post.likes_count || 0}</span>
+                            </button>
+                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                <span>${post.comments_count || 0}</span>
+                            </button>
+                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                <span>${post.reposts_count || 0}</span>
+                            </button>
+                            ${!postIsAuthor && currentWalletAddress ? `
+                            <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <span>Tip</span>
+                            </button>
+                            ` : ''}
+                        </div>
+                        <div id="comments-section-${post.id}" class="comments-section mt-4 pt-3 border-t border-gray-200 hidden">
+                            <h4 class="font-semibold mb-2 text-gray-700">Comments</h4>
+                            <div id="comments-list-${post.id}" class="space-y-2 text-sm">
+                                <!-- Comments will be loaded here dynamically -->
+                            </div>
+                            <div class="flex mt-3">
+                                <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                <button class="post-comment-button bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600 transition-colors duration-200" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            profilePostsFeed.innerHTML = postsHtml;
+
+            // Re-attach event listeners for dynamically created elements
+            profilePostsFeed.querySelectorAll('.like-button').forEach(button => {
+                button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
+            });
+            profilePostsFeed.querySelectorAll('.comment-toggle-button').forEach(button => {
+                button.onclick = async () => { // Make async to fetch comments
+                    const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
+                    commentsSection.classList.toggle('hidden');
+                    if (!commentsSection.classList.contains('hidden')) {
+                        // Fetch and display comments when section is shown
+                        const { data: commentsData, error: commentsError } = await supabase
+                            .from('comments')
+                            .select('*')
+                            .eq('post_id', button.dataset.postId)
+                            .order('created_at', { ascending: true });
+
+                        const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
+                        commentsListDiv.innerHTML = ''; // Clear loading message
+
+                        if (commentsError) {
+                            console.error("Error fetching comments:", commentsError);
+                            commentsListDiv.innerHTML = '<p class="text-red-400">Error loading comments.</p>';
+                        } else if (commentsData && commentsData.length > 0) {
+                            let loadedCommentsHtml = '';
+                            for (const comment of commentsData) {
+                                const commentAuthorName = allUsers[comment.author_address]?.username || comment.username || comment.author_address.substring(0, 6) + '...' + comment.author_address.slice(-4);
+                                loadedCommentsHtml += `
+                                    <div class="bg-gray-50 p-3 rounded-lg mb-2 text-sm border border-gray-100">
+                                        <p class="font-semibold text-gray-800">${commentAuthorName}</p>
+                                        <p class="text-gray-700">${comment.content}</p>
+                                        <p class="text-xs text-gray-500">${new Date(comment.created_at).toLocaleString()}</p>
+                                    </div>
+                                `;
+                            }
+                            commentsListDiv.innerHTML = loadedCommentsHtml;
+                        } else {
+                            commentsListDiv.innerHTML = '<p class="text-gray-500 text-sm">No comments yet. Be the first!</p>';
+                        }
+                    }
+                };
+            });
+            profilePostsFeed.querySelectorAll('.repost-button').forEach(button => {
+                button.onclick = () => handleRepost(button.dataset.postId);
+            });
+            profilePostsFeed.querySelectorAll('.tip-button').forEach(button => {
+                button.onclick = () => {
+                    document.getElementById('tip-username').textContent = button.dataset.authorUsername;
+                    document.getElementById('tip-confirm').onclick = () => handleTip(button.dataset.authorAddress, parseInt(document.getElementById('tip-amount').value));
+                    document.getElementById('tip-modal').classList.remove('hidden');
+                };
+            });
+            profilePostsFeed.querySelectorAll('.post-comment-button').forEach(button => {
+                button.onclick = async () => {
+                    const postId = button.dataset.postId;
+                    const commentInput = button.previousElementSibling;
+                    const commentContent = commentInput.value.trim();
+                    if (commentContent) {
+                        await handleComment(postId, commentContent);
+                        commentInput.value = '';
+                    } else {
+                        showMessage("Comment cannot be empty.", "error");
+                    }
+                };
+            });
+            profilePostsFeed.querySelectorAll('[data-wallet-address]').forEach(element => {
+                element.onclick = () => handleProfileClick(element.dataset.walletAddress);
+            });
+        }
+
+        function renderWalletPage() {
+            const walletPage = document.getElementById('wallet-page');
+            const connectedStateHtml = `
+                <header class="flex justify-between items-center px-6 py-4 bg-white shadow-md">
+                    <div>
+                        <h1 class="text-xl font-bold text-[#0A7740]">GOR Wallet</h1>
+                        <p class="text-sm text-gray-500">Connected: GOR Chain ✅</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-green-600 text-white px-3 py-1 rounded-full truncate max-w-[100px] sm:max-w-none">
+                            ${currentWalletAddress ? currentWalletAddress.substring(0, 7) + '...' + currentWalletAddress.slice(-4) : 'Not Connected'}
+                        </span>
+                        <button id="wallet-notifications-button" class="relative text-xl text-gray-700 hover:text-green-700 transition-colors duration-200">
+                            🔔
+                            <span id="wallet-notification-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs ${notifications.filter(n => !n.read).length > 0 ? 'animate-ping-once' : 'hidden'}">
+                                ${notifications.filter(n => !n.read).length}
+                            </span>
+                        </button>
+                    </div>
+                </header>
+
+                <section class="max-w-4xl mx-auto mt-6 px-6">
+                    <div class="bg-white p-6 rounded-lg shadow-lg mb-6 border border-green-300">
+                        <h2 class="text-lg font-semibold text-[#0A7740] mb-2">Main Balance</h2>
+                        <p class="text-4xl font-bold text-[#1C1C1E]">${walletData.gor_balance.toFixed(3)} GOR</p>
+                        <p class="text-sm text-gray-500">Approx. $${(walletData.gor_balance * 0.8).toFixed(2)}</p>
+                        <div class="mt-4 space-x-2">
+                            <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" ${!currentWalletAddress ? 'disabled' : ''}>+ Add GOR</button>
+                            <button class="bg-white border border-green-600 text-green-600 px-4 py-2 rounded-md hover:bg-green-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" ${!currentWalletAddress ? 'disabled' : ''}>Withdraw</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-lg mb-6 border border-green-300">
+                        <h2 class="text-lg font-semibold text-[#0A7740] mb-4">🎟️ Tickets You Hold</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${walletData.tickets_holding.length > 0 ?
+                                walletData.tickets_holding.map(ticket => `
+                                    <div class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold text-lg">
+                                                ${ticket.username ? ticket.username[0].toUpperCase() : 'U'}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-800">@${ticket.username || 'Unknown User'}</p>
+                                                <p class="text-sm text-gray-500">${ticket.count} Ticket${ticket.count !== 1 ? 's' : ''}</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 flex space-x-2">
+                                            <button class="text-green-600 text-sm hover:underline view-profile-button" data-wallet-address="${ticket.wallet_address}">👀 View Profile</button>
+                                            <button class="text-red-500 text-sm hover:underline sell-ticket-button" data-wallet-address="${ticket.wallet_address}" ${!currentWalletAddress ? 'disabled' : ''}>🗑 Sell</button>
+                                        </div>
+                                    </div>
+                                `).join('')
+                                : `<p class="col-span-full text-center text-gray-500">You don't hold any tickets yet.</p>`
+                            }
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-lg border border-green-300">
+                        <h2 class="text-lg font-semibold text-[#0A7740] mb-4">🧾 Recent Activity</h2>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li>✅ Wallet connected <span class="text-gray-400">(just now)</span></li>
+                            ${walletData.gor_balance !== 0 ? `<li>✅ Balance updated <span class="text-gray-400">(recent)</span></li>` : ''}
+                            ${walletData.tickets_holding.length > 0 ? `<li>✅ Tickets held updated <span class="text-gray-400">(recent)</span></li>` : ''}
+                        </ul>
+                    </div>
+                </section>
+            `;
+            const disconnectedStateHtml = `
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg shadow-md" role="alert">
+                    <p class="font-bold">Connect Your Wallet!</p>
+                    <p>To view your wallet, please connect your Web3 wallet (e.g., Backpack, Phantom).</p>
+                    <div class="mt-3">
+                        <button id="connect-wallet-button" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors duration-200">Connect Wallet</button>
+                    </div>
+                </div>
+            `;
+
+            walletPage.innerHTML = currentWalletAddress ? connectedStateHtml : disconnectedStateHtml;
+
+            if (currentWalletAddress) {
+                document.getElementById('wallet-notifications-button').onclick = () => { currentPage = 'notifications'; renderApp(); };
+                walletPage.querySelectorAll('.view-profile-button').forEach(button => {
+                    button.onclick = () => handleProfileClick(button.dataset.walletAddress);
+                });
+                walletPage.querySelectorAll('.sell-ticket-button').forEach(button => {
+                    button.onclick = () => handleSellTicket(button.dataset.walletAddress);
+                });
+            } else {
+                document.getElementById('connect-wallet-button').onclick = connectWallet;
+            }
+        }
+
+        function renderNotificationsPage() {
+            const notificationsPage = document.getElementById('notifications-page');
+            let notificationsHtml = '<h2 class="text-2xl font-bold text-gray-800 mb-4">Notifications</h2>';
+            if (notifications.length > 0) {
+                notifications.forEach(notification => {
+                    notificationsHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-md mb-3 border border-gray-200 cursor-pointer transition-all duration-200 ${notification.read ? 'opacity-70' : 'bg-green-50 hover:bg-green-100'}" data-notification-id="${notification.id}">
+                            <p class="text-gray-800">${notification.message}</p>
+                            <p class="text-sm text-gray-500">${new Date(notification.created_at).toLocaleString()}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                notificationsHtml += '<p class="text-center text-gray-500">No new notifications.</p>';
+            }
+            notificationsPage.innerHTML = notificationsHtml;
+
+            notificationsPage.querySelectorAll('[data-notification-id]').forEach(element => {
+                element.onclick = () => handleMarkNotificationRead(element.dataset.notificationId);
+            });
+        }
+
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notification-badge');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.classList.remove('hidden');
+                badge.classList.add('animate-bounce-fade-in'); // Apply animation
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('animate-bounce-fade-in');
+            }
+        }
+
+        function renderSearchPage() {
+            const searchPage = document.getElementById('search-page');
+            const trendingUsers = getTrendingUsers();
+
+            let searchHtml = `
+                <div class="bg-white p-4 rounded-lg shadow-md mb-6 border border-gray-200 flex">
+                    <input type="text" id="search-input" placeholder="Search posts or users..." class="flex-grow p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" value="${searchTerm}">
+                    <button id="search-button" class="bg-green-500 text-white px-6 py-3 rounded-r-md hover:bg-green-600 transition-colors duration-200">Search</button>
+                </div>
+            `;
+
+            if (searchTerm.trim() === '') {
+                searchHtml += `
+                    <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🔥 Trending Users</h3>
+                        ${trendingUsers.length > 0 ? `
+                            <ul class="space-y-3">
+                                ${trendingUsers.map(user => `
+                                    <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors duration-200" data-wallet-address="${user.wallet_address}">
+                                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold">
+                                            ${user.username ? user.username[0].toUpperCase() : 'U'}
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">${user.username}</p>
+                                            <p class="text-sm text-gray-500">
+                                                ${user.followers?.length || 0} Followers • ${user.tickets_earned || 0} Tickets
+                                            </p>
+                                        </div>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : `
+                            <p class="text-center text-gray-500">No trending users yet.</p>
+                        `}
+                    </div>
+                `;
+            } else {
+                const filteredPosts = posts.filter(post =>
+                    post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    post.username.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                searchHtml += `<h3 class="text-xl font-bold text-gray-800 mb-4">Search Results</h3>`;
+                if (filteredPosts.length > 0) {
+                    // Re-use Post rendering logic (simplified for HTML)
+                    let postsContentHtml = '';
+                    for(const post of filteredPosts) {
+                        const authorName = allUsers[post.author_address]?.username || post.username || post.author_address.substring(0, 6) + '...' + post.author_address.slice(-4);
+                        const isLiked = post.likes && post.likes.includes(currentWalletAddress);
+                        const likeButtonClass = isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400';
+                        const isAuthor = post.author_address === currentWalletAddress;
+
+                        postsContentHtml += `
+                            <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-lg mr-3 cursor-pointer" data-wallet-address="${post.author_address}">
+                                        ${authorName[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800 cursor-pointer" data-wallet-address="${post.author_address}">${authorName}</p>
+                                        <p class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 mb-4">${post.content}</p>
+                                ${post.image_url ? `<div class="mb-4"><img src="${post.image_url}" alt="Post image" class="rounded-lg w-full h-auto max-h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Image+Not+Found';"/></div>` : ''}
+                                <div class="flex justify-around items-center text-gray-600 border-t border-b border-gray-200 py-2">
+                                    <button class="flex items-center space-x-1 p-2 rounded-full transition-colors duration-200 ${likeButtonClass} like-button" data-post-id="${post.id}" data-is-liked="${isLiked}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                        <span>${post.likes_count || 0}</span>
+                                    </button>
+                                    <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-blue-400 transition-colors duration-200 comment-toggle-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                                        <span>${post.comments_count || 0}</span>
+                                    </button>
+                                    <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-green-400 transition-colors duration-200 repost-button" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17 12l-4 4v-3H7V9h6V6l4 4zm-4 7H7V5h6v2h4V5c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4h-4v2z"/></svg>
+                                        <span>${post.reposts_count || 0}</span>
+                                    </button>
+                                    ${!isAuthor && currentWalletAddress ? `
+                                    <button class="flex items-center space-x-1 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors duration-200 tip-button" data-author-address="${post.author_address}" data-author-username="${authorName}">
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                        <span>Tip</span>
+                                    </button>
+                                    ` : ''}
+                                </div>
+                                <div id="comments-section-${post.id}" class="comments-section mt-4 pt-3 border-t border-gray-200 hidden">
+                                    <h4 class="font-semibold mb-2 text-gray-700">Comments</h4>
+                                    <div id="comments-list-${post.id}" class="space-y-2 text-sm">
+                                        <!-- Comments will be loaded here dynamically -->
+                                    </div>
+                                    <div class="flex mt-3">
+                                        <input type="text" placeholder="Add a comment..." class="comment-input flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>
+                                        <button class="post-comment-button bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600 transition-colors duration-200" data-post-id="${post.id}" ${!currentWalletAddress ? 'disabled' : ''}>Comment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    searchHtml += postsContentHtml;
+                } else {
+                    searchHtml += `<p class="text-center text-gray-500">No results found for "${searchTerm}".</p>`;
+                }
+            }
+            searchPage.innerHTML = searchHtml;
+
+            // Attach event listeners for search page elements
+            document.getElementById('search-button').onclick = handleSearch;
+            document.getElementById('search-input').onkeyup = (e) => {
+                if (e.key === 'Enter') handleSearch();
+            };
+            searchPage.querySelectorAll('[data-wallet-address]').forEach(element => {
+                element.onclick = () => handleProfileClick(element.dataset.walletAddress);
+            });
+
+            // Attach post interaction listeners for search results
+            searchPage.querySelectorAll('.like-button').forEach(button => {
+                button.onclick = () => handleLike(button.dataset.postId, button.dataset.isLiked === 'true');
+            });
+            searchPage.querySelectorAll('.comment-toggle-button').forEach(button => {
+                button.onclick = async () => {
+                    const commentsSection = document.getElementById(`comments-section-${button.dataset.postId}`);
+                    commentsSection.classList.toggle('hidden');
+                    if (!commentsSection.classList.contains('hidden')) {
+                        const { data: commentsData, error: commentsError } = await supabase
+                            .from('comments')
+                            .select('*')
+                            .eq('post_id', button.dataset.postId)
+                            .order('created_at', { ascending: true });
+
+                        const commentsListDiv = document.getElementById(`comments-list-${button.dataset.postId}`);
+                        commentsListDiv.innerHTML = '';
+
+                        if (commentsError) {
+                            console.error("Error fetching comments:", commentsError);
+                            commentsListDiv.innerHTML = '<p class="text-red-400">Error loading comments.</p>';
+                        } else if (commentsData && commentsData.length > 0) {
+                            let loadedCommentsHtml = '';
+                            for (const comment of commentsData) {
+                                const commentAuthorName = allUsers[comment.author_address]?.username || comment.username || comment.author_address.substring(0, 6) + '...' + comment.author_address.slice(-4);
+                                loadedCommentsHtml += `
+                                    <div class="bg-gray-50 p-3 rounded-lg mb-2 text-sm border border-gray-100">
+                                        <p class="font-semibold text-gray-800">${commentAuthorName}</p>
+                                        <p class="text-gray-700">${comment.content}</p>
+                                        <p class="text-xs text-gray-500">${new Date(comment.created_at).toLocaleString()}</p>
+                                    </div>
+                                `;
+                            }
+                            commentsListDiv.innerHTML = loadedCommentsHtml;
+                        } else {
+                            commentsListDiv.innerHTML = '<p class="text-gray-500 text-sm">No comments yet. Be the first!</p>';
+                        }
+                    }
+                };
+            });
+            searchPage.querySelectorAll('.repost-button').forEach(button => {
+                button.onclick = () => handleRepost(button.dataset.postId);
+            });
+            searchPage.querySelectorAll('.tip-button').forEach(button => {
+                button.onclick = () => {
+                    document.getElementById('tip-username').textContent = button.dataset.authorUsername;
+                    document.getElementById('tip-confirm').onclick = () => handleTip(button.dataset.authorAddress, parseInt(document.getElementById('tip-amount').value));
+                    document.getElementById('tip-modal').classList.remove('hidden');
+                };
+            });
+            searchPage.querySelectorAll('.post-comment-button').forEach(button => {
+                button.onclick = async () => {
+                    const postId = button.dataset.postId;
+                    const commentInput = button.previousElementSibling;
+                    const commentContent = commentInput.value.trim();
+                    if (commentContent) {
+                        await handleComment(postId, commentContent);
+                        commentInput.value = '';
+                    } else {
+                        showMessage("Comment cannot be empty.", "error");
+                    }
+                };
+            });
+        }
+
+        function renderSettingsPage() {
+            const settingsPage = document.getElementById('settings-page');
+            settingsPage.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">General</h3>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">App Version:</label>
+                        <p class="text-gray-600">1.0.0</p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Connected Wallet Address:</label>
+                        ${currentWalletAddress ? `<p class="text-gray-600 font-mono text-sm bg-gray-100 px-2 py-1 rounded inline-block">${currentWalletAddress}</p>` : `<p class="text-red-500">No wallet connected.</p>`}
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Theme:</label>
+                        <div class="flex items-center space-x-4">
+                            <button class="bg-green-500 text-white px-4 py-2 rounded-md">Green & White (Default)</button>
+                            <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md cursor-not-allowed opacity-70">Dark Mode (Coming Soon)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Notifications</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <label for="pushNotifications" class="text-gray-700">Enable Push Notifications</label>
+                        <input type="checkbox" id="pushNotifications" class="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-400" checked />
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label for="emailNotifications" class="text-gray-700">Email Notifications</label>
+                        <input type="checkbox" id="emailNotifications" class="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-400" />
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">Note: These are placeholder settings for demonstration.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">About</h3>
+                    <p class="text-gray-700">This is a Web3-aligned social application, inspired by Twitter, built to demonstrate decentralized interaction concepts.</p>
+                    <p class="text-gray-700 mt-2">Developed using HTML, CSS, and JavaScript with Supabase for data and Solana for blockchain interactions.</p>
+                </div>
+            `;
+        }
+
+        // --- Event Listeners for Navigation and Modals ---
+        document.getElementById('home-nav').onclick = () => { currentPage = 'home'; renderApp(); };
+        document.getElementById('profile-nav').onclick = () => { currentPage = 'profile'; profileViewAddress = currentWalletAddress; renderApp(); };
+        document.getElementById('wallet-nav').onclick = () => { currentPage = 'wallet'; renderApp(); };
+        document.getElementById('notifications-nav').onclick = () => { currentPage = 'notifications'; renderApp(); };
+        document.getElementById('search-nav').onclick = () => { currentPage = 'search'; renderApp(); };
+        document.getElementById('settings-nav').onclick = () => { currentPage = 'settings'; renderApp(); };
+
+        document.getElementById('message-close').onclick = () => {
+            document.getElementById('message-box').classList.add('hidden');
+        };
+
+        document.getElementById('tip-cancel').onclick = () => {
+            document.getElementById('tip-modal').classList.add('hidden');
+        };
+
+        document.getElementById('edit-profile-cancel').onclick = () => {
+            document.getElementById('profile-edit-modal').classList.add('hidden');
+        };
+        document.getElementById('edit-profile-save').onclick = handleSaveProfile;
+
+
+        // Initial render when script loads
+        document.addEventListener('DOMContentLoaded', async () => { // Made async to await initReownAppKit
+            await initReownAppKit(); // Initialize Reown AppKit first
+            // Check if Supabase is ready before initial render
+            const checkSupabaseReady = setInterval(() => {
+                if (supabase && supabase.from && supabase.storage) {
+                    clearInterval(checkSupabaseReady);
+                    renderApp(); // Initial render of the app
+                    setupSupabaseRealtime(); // Setup real-time listeners
+                }
+            }, 100); // Check every 100ms
+        });
+
+    </script>
+</body>
+</html>
